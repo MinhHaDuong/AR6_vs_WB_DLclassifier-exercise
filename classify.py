@@ -7,6 +7,7 @@ Created on Tue May  9 21:02:33 2023
 import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
+from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
 
 # load the data
@@ -27,8 +28,11 @@ model.add(Dense(1, activation='sigmoid'))
 # compile the model
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
+# define early stopping
+early_stopping = EarlyStopping(monitor='val_loss', patience=3, verbose=1, restore_best_weights=True)
+
 # train the model
-model.fit(X_train, y_train, batch_size=128, epochs=10, validation_data=(X_test, y_test))
+model.fit(X_train, y_train, batch_size=64, epochs=10, validation_data=(X_test, y_test), callbacks=[early_stopping])
 
 # evaluate the model on the test data
 score = model.evaluate(X_test, y_test, verbose=0)
