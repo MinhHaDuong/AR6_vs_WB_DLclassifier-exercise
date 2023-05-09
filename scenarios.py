@@ -21,9 +21,7 @@ print(df.info())
 indicators = [
     "Emissions|CO2",  # total net-CO2 emissions from all sources, Mt CO2/yr
     "GDP|MER",        # GDP at market exchange rate, billion US$2010/yr
-    #    "Land Cover|Forest",
     "Population",
-    #    "Population|Urban",
     "Primary Energy"
     ]
 
@@ -75,7 +73,6 @@ end = time.time()
 print("Execution time: ", end - start)
 del start, end
 print(df2.info())
-
 
 # %% Make a numpy array with a sliding window
 
