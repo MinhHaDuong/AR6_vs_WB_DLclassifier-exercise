@@ -16,14 +16,12 @@ Created on Thu Apr 28 2023
 """
 
 import pandas as pd
-from functools import lru_cache
 
 filename = "AR6_Scenarios_Database_ISO3_v1.1.csv"
 
 # %% Import the data
 
 
-@lru_cache(maxsize=None)
 def _get_dataframe():
     coltypes = {
         'Model': 'category',
