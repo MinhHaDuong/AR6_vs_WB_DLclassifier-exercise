@@ -54,7 +54,7 @@ except Exception as e:
     print('An error occurred while saving the array data:', e)
    
 try:
-    np.save('labels.npy', data)
+    np.save('labels.npy', labels)
     print('Array labels saved successfully!')
 except Exception as e:
     print('An error occurred while saving the array labels:', e)
