@@ -1,12 +1,18 @@
-#!/home/haduong/CNRS/papiers/actif/DL_SDI/src/classifying_country_scenarios/venv/bin/python3
-# -*- coding: utf-8 -*-
 """
+Access IPCC AR6 scenarios database of national results as a dataframe.
+
+Expose scenario results as a Pandas dataframe.
+The multiindex is Model - Scenario - Region - Variable.
+Clean data to ensure consistent units.
+Keep years at a five time step between 2005 and 2050.
+Provide auxilliary functions to explore the list of variables.
+Database online at https://data.ece.iiasa.ac.at/ar6/#/docs.
+
+Example use:
+from ar6_scenario_database_iso3 import df
+
 Created on Thu Apr 28 2023
-
-@author: haduong
-
-This module is an interface to the IPCC AR6 scenarios database, national results
-
+@author: haduong@centre-cired.fr
 """
 
 import pandas as pd
@@ -19,9 +25,6 @@ filename = "AR6_Scenarios_Database_ISO3_v1.1.csv"
 
 @lru_cache(maxsize=None)
 def _get_dataframe():
-    # Python defaultdict is ugly
-    # Seems Python makes the multiindex components categorical in any case, but we specify anyway
-    # Optimisation possible: consider the multindex
     coltypes = {
         'Model': 'category',
         'Scenario': 'category',
