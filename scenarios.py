@@ -1,13 +1,8 @@
-#!/home/haduong/CNRS/papiers/actif/DL_SDI/src/classifying_country_scenarios/venv/bin/python3
-# -*- coding: utf-8 -*-
-"""
+"""Use deep learning to distinguish AR6 scenarios from SDI observations.
+
 Created on Thu Apr 28 2023
 
-@author: haduong
-
-Based on tutorial MNIST1 from FIDLE
-
-This file is an exercise to manipulate IPCC AR6 scenarios database
+@author: haduong@centre-cired.fr
 """
 
 import pandas as pd
@@ -24,8 +19,8 @@ print(df.info())
 # so order must be preserved.
 
 indicators = [
-    "Emissions|CO2",
-    "GDP|MER",
+    "Emissions|CO2",  # total net-CO2 emissions from all sources, Mt CO2/yr
+    "GDP|MER",        # GDP at market exchange rate, billion US$2010/yr
     #    "Land Cover|Forest",
     "Population",
     #    "Population|Urban",
@@ -82,7 +77,7 @@ del start, end
 print(df2.info())
 
 
-# %%
+# %% Make a numpy array with a sliding window
 
 gen_length = 6   # At five years step, twenty five years including extremities
 num_cols = df2.shape[1]
@@ -109,7 +104,8 @@ simulations = np.array(simulations)
 assert not np.isnan(simulations).any(), "Array contains null values"
 assert (simulations != 0).all(), "Array containts zero values"
 
-# %% Normalization
+# %% Normalize
+
 """The series in levels is transformed to a series where:
    - The first value is a fraction of the world in 1990
    - Subsequent values are factors from the previous value
