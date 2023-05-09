@@ -48,7 +48,7 @@ pd.set_option('display.max_columns', None)
 
 # print(df)
 
-# %% Make an array with the country development trajectories
+# %% Build the array with the country development trajectories
 
 def trajectories(country, min_years=25):
     block = df.loc[country]
@@ -61,7 +61,8 @@ def trajectories(country, min_years=25):
         grid = list(range(y, y + min_years + 1, 5))
         try:
             a = block.loc[grid].values.transpose()
-            result.append(a)
+            if np.all(a != 0) and not np.any(np.isnan(a)):
+                result.append(a)
         except KeyError:
             pass
     return result
@@ -69,13 +70,22 @@ def trajectories(country, min_years=25):
 # trajectories('Afghanistan')
 # trajectories('World')
 
-# %%
-
 observations = []
 
 for country in df.index.get_level_values('country'):
     observations.extend(trajectories(country))
 
-observations = np.array(observations)
-
 del country
+
+observations = np.array(observations, dtype='float32')
+
+# %% Save te result
+
+assert not np.isnan(observations).any(), "Array contains null values"
+assert (observations != 0).all(), "Array containts zero values"
+
+try:
+    np.save('observations.npy', observations)
+    print('Array observations saved successfully!')
+except Exception as e:
+    print('An error occurred while saving the array observations:', e)

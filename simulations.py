@@ -11,12 +11,9 @@ import time
 
 from ar6_scenario_database_iso3 import df, top_variables
 
-# %%
+#print(df2.info())
 
-print(df.info())
-
-# %% This is a list, not a set because later we store in an numpy array
-# so order must be preserved.
+# %% This is a list not a set, order matters when we store in an numpy array
 
 indicators = [
     "Emissions|CO2",  # total net-CO2 emissions from all sources, Mt CO2/yr
@@ -44,8 +41,9 @@ Note: VN Masterplan 2021-2030 objectives pertain to:
 """
 
 # Check we picked popular indicators
+print('Number of scenario x country simulations available, by variable')
 print(top_variables(-1)[indicators])
-
+print()
 
 # %% Keep only the rows describing the indicators
 
@@ -65,14 +63,15 @@ def hasall(indicators):
             mask[mi] = True
     return mask
 
-
+print('Starting long loop on scenarios')
 start = time.time()
 df2 = df[hasall(indicators)]
 end = time.time()
 
-print("Execution time: ", end - start)
+print("Done. Execution time: ", end - start)
+print()
 del start, end
-print(df2.info())
+#print(df2.info())
 
 # %% Make a numpy array with a sliding window
 
@@ -82,6 +81,7 @@ multiindex = df2.index.droplevel('Variable').unique()
 
 reference_units = df2.loc[multiindex[0]]["Unit"]
 print("Reference units:", reference_units)
+print()
 
 simulations = []
 
@@ -91,8 +91,8 @@ for i in multiindex:
     assert (trajectory['Unit'] == reference_units).all()
     for y in range(1, num_cols - gen_length + 1):
         a = trajectory.iloc[:, y:y + gen_length].values
-        if not np.isnan(a).any():           # Todo: clean the NaN and the zeros afterwards
-            simulations.append(a)
+        if np.all(a != 0) and not np.any(np.isnan(a)):
+             simulations.append(a)
 
 del a, i, y, multiindex, trajectory, gen_length, num_cols, reference_units
 
@@ -100,3 +100,9 @@ simulations = np.array(simulations)
 
 assert not np.isnan(simulations).any(), "Array contains null values"
 assert (simulations != 0).all(), "Array containts zero values"
+
+try:
+    np.save('simulations.npy', simulations)
+    print('Array simulations saved successfully!')
+except Exception as e:
+    print('An error occurred while saving the array simulations:', e)
