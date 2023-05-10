@@ -7,11 +7,8 @@ Created on Thu Apr 28 2023
 
 import pandas as pd
 import numpy as np
-import time
 
 from ar6_scenario_database_iso3 import df, top_variables
-
-#print(df2.info())
 
 # %% This is a list not a set, order matters when we store in an numpy array
 
@@ -63,85 +60,32 @@ def hasall(df, indicators):
     mask[group_counts != len(indicators)] = False
     return mask
 
-df2 = df[hasall(df, indicators)]
-#print(df2.info())
+df = df[hasall(df, indicators)]
 
 
-# %% Make a numpy array with a sliding window
+# %% Sanity check
 
-gen_length = 6   # At five years step, twenty five years including extremities
-num_cols = df2.shape[1]
-multiindex = df2.index.droplevel('Variable').unique()
-
-reference_units = df2.loc[multiindex[0]]["Unit"]
-print("Reference units:", reference_units)
+units = df['Unit'].unique() 
+print('Units:')
+print(units)
 print()
+assert len(units) == len(indicators), "More units than variables."
+del units
 
 
- 
-print('Starting long loop on scenarios')
-start = time.time()
+# %% Make a numpy array of 25-years trajectories
 
-simulations = []
+width = 6   # At five years step, twenty five years including extremities
 
-for i in multiindex:
-    trajectory = df2.loc[i]
-    assert list(trajectory.index.values) == indicators
-    assert (trajectory['Unit'] == reference_units).all()
-    for y in range(1, num_cols - gen_length + 1):
-        a = trajectory.iloc[:, y:y + gen_length].values
-        if np.all(a != 0) and not np.any(np.isnan(a)):
-             simulations.append(a)
+simulations = np.array([
+    a[:, i:i + width]
+    for _, trajectory in df.groupby(level=[0, 1, 2])
+    for a in [trajectory.iloc[:, 1:].values]
+    for i in range(df.shape[1] - width)
+    if not (np.isnan(a) | (a == 0)).any()
+])
 
-del a, i, y, multiindex, trajectory, gen_length, num_cols, reference_units
-
-simulations = np.array(simulations)
-
-assert not np.isnan(simulations).any(), "Array contains null values"
-assert (simulations != 0).all(), "Array containts zero values"
-
-end = time.time()
-print("Done. Execution time: ", end - start)
-print()
-del start, end
-
-expected = simulations
-
-# %% Make a numpy array with a sliding window FASTER
-
-gen_length = 6   # At five years step, twenty five years including extremities
-num_cols = df2.shape[1]
-multiindex = df2.index.droplevel('Variable').unique()
-
-reference_units = df2.loc[multiindex[0]]["Unit"]
-# print("Reference units:", reference_units)
-# print()
-
-
- 
-print('Starting long loop on scenarios')
-start = time.time()
-
-simulations = []
-
-for i, trajectory in df2.groupby(level=[0, 1, 2]):
-    trajectory = trajectory.reset_index(level=[0, 1, 2], drop=True)
-    assert list(trajectory.index.get_level_values('Variable')) == indicators
-    assert (trajectory['Unit'] == reference_units).all()
-    for y in range(1, num_cols - gen_length + 1):
-        a = trajectory.iloc[:, y:y + gen_length].values
-        if np.all(a != 0) and not np.any(np.isnan(a)):
-             simulations.append(a)
-
-if (np.array(simulations) == expected).all():
-    print('No regression')
-else:
-    print('Failed')
-
-end = time.time()
-print("Execution time: ", end - start)
-print()
-del start, end
+del width
 
 
 # %%

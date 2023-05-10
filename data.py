@@ -30,18 +30,13 @@ world1990 = np.array([          # Source: ourworldindata.org
     5320,   # Population          million
     343.9])   # Primary Energy      EJ/yr,    95527 TWh
 
-def as_change(a):
+def as_change(arrays):
     """Convert a vector of levels into a vector of initial level and factors."""
-    b = np.zeros_like(a)
-    b[0] = a[0]
-    for i in range(1, len(a)):
-        if abs(a[i - 1]) <= 0.0001:
-            print("Warning: division by ", a[i-1], " at i=", i)
-        b[i] = a[i] / a[i - 1]
-    return b
+    rotated = np.roll(arrays, 1, axis=2)
+    rotated[:, :, 0] = 1
+    return arrays / rotated
 
-
-normalized = np.apply_along_axis(as_change, 2, dataset)
+normalized = as_change(dataset)
 
 normalized[:, :, 0] /= world1990
 
