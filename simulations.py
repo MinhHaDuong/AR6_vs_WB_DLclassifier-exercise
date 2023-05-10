@@ -48,7 +48,7 @@ print()
 # %% Keep only the rows describing the indicators
 
 
-def hasall(indicators):
+def hasall(df, indicators):
     """Return a mask so that the subdataframe df[mask] is 'full' wrt indicators.
 
     'Full' meaning for any triple (model, scenario, region),
@@ -56,22 +56,16 @@ def hasall(indicators):
     is exactly the set 'indicators'.
     We return the largest such subdataframe.
     """
-    mask = pd.Series(False, index=df.index)
-    for (m, s, r) in df.index.droplevel('Variable').unique():
-        mi = pd.MultiIndex.from_product([[m], [s], [r], indicators])
-        if mi.isin(df.index).all():
-            mask[mi] = True
+    mask = pd.Series(
+        df.index.get_level_values('Variable').isin(indicators),
+        index=df.index)
+    group_counts = mask.groupby(level=[0, 1, 2]).transform('sum')
+    mask[group_counts != len(indicators)] = False
     return mask
 
-print('Starting long loop on scenarios')
-start = time.time()
-df2 = df[hasall(indicators)]
-end = time.time()
-
-print("Done. Execution time: ", end - start)
-print()
-del start, end
+df2 = df[hasall(df, indicators)]
 #print(df2.info())
+
 
 # %% Make a numpy array with a sliding window
 
@@ -82,6 +76,11 @@ multiindex = df2.index.droplevel('Variable').unique()
 reference_units = df2.loc[multiindex[0]]["Unit"]
 print("Reference units:", reference_units)
 print()
+
+
+ 
+print('Starting long loop on scenarios')
+start = time.time()
 
 simulations = []
 
@@ -100,6 +99,52 @@ simulations = np.array(simulations)
 
 assert not np.isnan(simulations).any(), "Array contains null values"
 assert (simulations != 0).all(), "Array containts zero values"
+
+end = time.time()
+print("Done. Execution time: ", end - start)
+print()
+del start, end
+
+expected = simulations
+
+# %% Make a numpy array with a sliding window FASTER
+
+gen_length = 6   # At five years step, twenty five years including extremities
+num_cols = df2.shape[1]
+multiindex = df2.index.droplevel('Variable').unique()
+
+reference_units = df2.loc[multiindex[0]]["Unit"]
+# print("Reference units:", reference_units)
+# print()
+
+
+ 
+print('Starting long loop on scenarios')
+start = time.time()
+
+simulations = []
+
+for i, trajectory in df2.groupby(level=[0, 1, 2]):
+    trajectory = trajectory.reset_index(level=[0, 1, 2], drop=True)
+    assert list(trajectory.index.get_level_values('Variable')) == indicators
+    assert (trajectory['Unit'] == reference_units).all()
+    for y in range(1, num_cols - gen_length + 1):
+        a = trajectory.iloc[:, y:y + gen_length].values
+        if np.all(a != 0) and not np.any(np.isnan(a)):
+             simulations.append(a)
+
+if (np.array(simulations) == expected).all():
+    print('No regression')
+else:
+    print('Failed')
+
+end = time.time()
+print("Execution time: ", end - start)
+print()
+del start, end
+
+
+# %%
 
 try:
     np.save('simulations.npy', simulations)
