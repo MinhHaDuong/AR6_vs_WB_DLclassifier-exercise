@@ -17,12 +17,13 @@ Created on Thu Apr 28 2023
 
 import pandas as pd
 
-filename = "AR6_Scenarios_Database_ISO3_v1.1.csv"
+filename_raw = "AR6_Scenarios_Database_ISO3_v1.1.csv"
+filename_clean = "ar6_trajectories.pkl"
 
 # %% Import the data
 
 
-def _get_dataframe():
+def _get_dataframe(filename):
     coltypes = {
         'Model': 'category',
         'Scenario': 'category',
@@ -81,52 +82,58 @@ def _clean(df):
         print("Alert: At least one Variable using more than one Unit.")
     return df
 
+try:
+    df = pd.read_pickle(filename_clean)
+    print('Successfully read cleaned AR6 trajectories from file', filename_clean)
+except:
+    print('Unable to access ', filename_clean, '. Attempting to create it.')
+    try:
+        df = _clean(_get_dataframe(filename_raw))
+        df.to_pickle(filename_clean)
+        print('Cleaned AR6 trajectories saved successfully!')
+    except Exception as e:
+        print('An error occurred while saving the AR6 trajectories:', e)
 
-df = _clean(_get_dataframe())
+        
 
-models = df.index.get_level_values(0).unique().tolist()
-scenarios = df.index.get_level_values(1).unique().tolist()
-regions = df.index.get_level_values(2).unique().tolist()
-variables = df.index.get_level_values(3).unique().tolist()
-years = df.columns.tolist()[1:]
+def get_models(df):
+    return df.index.get_level_values(0).unique().tolist()
+
+def get_scenarios(df):
+    return df.index.get_level_values(1).unique().tolist()
+
+def get_regions(df):
+    return df.index.get_level_values(2).unique().tolist()
+
+def get_variables(df):
+    return df.index.get_level_values(3).unique().tolist()
+
+def get_years(df):
+    return df.columns.tolist()[1:]
 
 
-# %% Tool functions to explore the variables
-
-
-def filter_variables(substring):
+def filter_variables(df, substring):
     """Filter variable names containing a substring.
 
     Useful to find the indicator we want in the large number of variables.
     """
+    variables = get_variables(df)
     return list(filter(lambda s: substring in s, variables))
 
 
-def top_variables(n):
+def top_variables(df, n):
     """Count the most frequently reported variables."""
     count = df.groupby(level=3).size()
+    variables = get_variables(df)
     return count[variables].sort_values(ascending=False)[0:n]
 
 
-def root_variables():
+def root_variables(df):
     """List the variables at the root of the variables nomenclature and counts.
 
     This shows that some root variables are rarely reported.
     """
+    variables = get_variables(df)
     roots = [s for s in variables if '|' not in s]
     return top_variables(-1)[roots].sort_values(ascending=False)
 
-
-# %% Functional access API mimicking module  world-bank-data
-
-# def get_models():
-#     return models
-
-# def get_regions():
-#     return regions
-
-# def get_scenarios():
-#     return scenarios
-
-# def get_years():
-#     return years

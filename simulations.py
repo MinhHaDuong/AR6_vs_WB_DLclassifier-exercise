@@ -8,7 +8,7 @@ Created on Thu Apr 28 2023
 import pandas as pd
 import numpy as np
 
-from ar6_scenario_database_iso3 import df, top_variables
+from ar6_trajectories import df, top_variables
 
 # %% This is a list not a set, order matters when we store in an numpy array
 
@@ -39,7 +39,7 @@ Note: VN Masterplan 2021-2030 objectives pertain to:
 
 # Check we picked popular indicators
 print('Number of scenario x country simulations available, by variable')
-print(top_variables(-1)[indicators])
+print(top_variables(df, -1)[indicators])
 print()
 
 # %% Keep only the rows describing the indicators
