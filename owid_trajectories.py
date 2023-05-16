@@ -19,6 +19,7 @@ import pandas as pd
 # Got it at  https://github.com/owid/co2-data/blob/master/owid-co2-data.csv
 # Units at https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv
 filename_raw = "owid-co2-data.csv"
+
 filename_clean = "owid_trajectories.pkl"
 
 
@@ -43,8 +44,8 @@ def _get_dataframe(filename):
         index_col=[0, 1],
         usecols=coltypes.keys(),
         dtype=coltypes).div(pd.Series(units))
-#        dtype=coltypes).dropna().div(pd.Series(units))
 
+#%%
 
 def _get_values_forward(group):
     group = group.reset_index()

@@ -22,8 +22,17 @@ from observations import get_observations
 indicators_simulations = [
     "Emissions|CO2",  # total net-CO2 emissions from all sources, Mt CO2/yr
     "GDP|MER",        # GDP at market exchange rate, billion US$2010/yr
+#    "GDP|PPP",
     "Population",
-    "Primary Energy"
+    "Primary Energy" #,
+#    "Secondary energy",
+#    "Final energy",
+#    "Capacity|Electricity",
+#    "Investment",
+#    "Consumption",
+#    "Land Cover|Cropland",
+#    "Land Cover|Pasture",
+#    "Land Cover|Forest",
     ]
 
 indicators_observations = [
