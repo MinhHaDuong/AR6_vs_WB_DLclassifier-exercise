@@ -10,82 +10,40 @@ Created on Thu Apr 20 15:03:33 2023
 
 import pandas as pd
 import numpy as np
+from owid_trajectories import df
 
-# Got it at  https://github.com/owid/co2-data/blob/master/owid-co2-data.csv
-# Units at https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv
-filename = "owid-co2-data.csv"
 
-coltypes = {
-    'country': 'category',
-    'year': 'int',
-    'population': 'float32',   # Known gotcha: NaN is a float
-    'gdp': 'float32',
-    'co2': 'float32',
-    'primary_energy_consumption': 'float32'}
+def _select(df, indicators):
+    """Return a masked dataframe with rows to include the variables in the indicators list.
 
-df = pd.read_csv(
-    filename,
-    index_col=[0, 1],
-    usecols=coltypes.keys(),
-    dtype=coltypes)
+    For any pair (country, year),
+    the result contains the row (country, v, year) for any v in indicators
+    the result does not contains any other row
+    the result is the largest such subdataframe.
+    """
+    assert not df.empty, "The dataframe to select from must not be empty."
+    assert indicators, "Indicators must be a non-empty list."
+    
+    mask = pd.Series(
+        df.index.get_level_values('variable').isin(indicators),
+        index=df.index)
+    group_counts = mask.groupby(level=[0, 1]).transform('sum')
+    mask[group_counts != len(indicators)] = False
 
-del filename, coltypes
+    result = df[mask]
 
-df = df.dropna()
+    assert set(result.index.get_level_values('variable').unique()) == set(indicators), "Incorrect Variables selection."
+    assert not result.empty, "The result is empty. Too many indicators?"
 
-units = [
-    1E6,    # Population in Million
-    1E9,    # GDP in billion  $ (international 2011)
-    1,      # CO2 Mt 
-    277.8]  # Primary energy in Ej from TWh
-
-df = df.div(units, axis=1)
-
-del units
-
-pd.set_option('display.width', 300)
-pd.set_option('display.max_columns', None)
-
-# print(df)
-
-# %% Build the array with the country development trajectories
-
-def trajectories(country, min_years=25):
-    block = df.loc[country]
-    years = block.index
-    start, end = years[0], years[-1]
-    if end - start < min_years:
-        return []
-    result = []
-    for y in range(start, end - min_years + 1):
-        grid = list(range(y, y + min_years + 1, 5))
-        try:
-            a = block.loc[grid].values.transpose()
-            if np.all(a != 0) and not np.any(np.isnan(a)):
-                result.append(a)
-        except KeyError:
-            pass
     return result
 
-# trajectories('Afghanistan')
-# trajectories('World')
 
-observations = []
+def get_observations(indicators):
+    subdf = _select(df, indicators)
 
-for country in df.index.get_level_values('country'):
-    observations.extend(trajectories(country))
-
-del country
-
-observations = np.array(observations, dtype='float32')
-
-# %% Save te result
-
-assert not np.isnan(observations).any(), "Array contains null values"
-assert (observations != 0).all(), "Array containts zero values"
-
-try:
-    np.save('observations.npy', observations)
-    print('Array observations saved successfully!')
-except Exception as e:
-    print('An error occurred while saving the array observations:', e)
+    result = np.array([
+        a
+        for _, a in subdf.groupby(level=[0, 1])
+        if not (np.isnan(a).any() | (a == 0).any()).any()
+        ])
+    return result

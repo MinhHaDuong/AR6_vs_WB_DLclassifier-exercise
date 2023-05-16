@@ -8,82 +8,60 @@ The series in levels is transformed to a series where:
 
    This ensures that the values are around 1.
 
-
 Created on Tue May  9 19:43:16 2023
 @author: haduong@centre-cired.fr
 """
 
 import numpy as np
-from ar6_trajectories import df as df_ar6_trajectories
-from simulations import array_simulations
+from simulations import get_simulations
+from observations import get_observations
 
 
 # %% This is a list not a set, order matters when we store in an numpy array
 
-indicators = [
+indicators_simulations = [
     "Emissions|CO2",  # total net-CO2 emissions from all sources, Mt CO2/yr
     "GDP|MER",        # GDP at market exchange rate, billion US$2010/yr
     "Population",
     "Primary Energy"
     ]
 
-"""
-Note: VN Masterplan 2021-2030 objectives pertain to:
-    Average GDP growth
-    GDP per capita
-    Urbanization rate
-    Propostion of GDP in services / industry+construction / agriculture+forestry+fisheries
-    Propostion of GDP of Digital economy
-    Population size
-    HDI
-    Life Expectancy and Healthy life Expectancy
-    Residential floor per person in urban area
-    Hospital beds and doctors per 10.000 people
-    Forest cover %, land reserves area, marine and coastal protected areas %
-    Rate of wastewater treatment
-    MSW collected %
-    GHG intensity of GDP
-"""
-# %%
+indicators_observations = [
+    'co2',
+    'gdp',
+    'population',
+    'primary_energy_consumption'
+    ]
 
-simulations = array_simulations(df_ar6_trajectories, indicators)
-
-# %% 
-
-observations = np.load("observations.npy")
-
-labels = np.concatenate([
-    np.zeros(len(simulations)),
-    np.ones(len(observations))])
-
-dataset = np.concatenate((simulations, observations))
-
-world1990 = np.array([          # Source: ourworldindata.org
+ #TODO: Use a dict and select the proper subset in get_data /=
+reference_levels = np.array([          # World 1990 from ourworldindata.org
     27630,  # Emissions|CO2       Mt CO2/yr
     35850,  # GDP|MER             billion US$2010/yr
     5320,   # Population          million
-    343.9])   # Primary Energy      EJ/yr,    95527 TWh
+    343.9   # Primary Energy      EJ/yr,    95527 TWh
+    ])
 
-def as_change(arrays):
+
+def _as_change(arrays):
     """Convert a vector of levels into a vector of initial level and factors."""
     rotated = np.roll(arrays, 1, axis=2)
     rotated[:, :, 0] = 1
     return arrays / rotated
 
-normalized = as_change(dataset)
 
-normalized[:, :, 0] /= world1990
+def get_data(isim=indicators_simulations, iobs=indicators_observations):
+    print('Simulations variables', isim)
+    print('Observation variables', iobs)
+    simulations = get_simulations(isim)
+    observations = get_observations(iobs)
 
-data =  normalized.reshape(normalized.shape[0], -1)
+    labels = np.concatenate([
+        np.zeros(len(simulations)),
+        np.ones(len(observations))])
 
-try:
-    np.save('data.npy', data)
-    print('Array data saved successfully!')
-except Exception as e:
-    print('An error occurred while saving the array data:', e)
-   
-try:
-    np.save('labels.npy', labels)
-    print('Array labels saved successfully!')
-except Exception as e:
-    print('An error occurred while saving the array labels:', e)
+    data = np.concatenate((simulations, observations))
+    data = _as_change(data)
+    data[:, :, 0] /= reference_levels
+    data = data.reshape(data.shape[0], -1)
+
+    return data, labels

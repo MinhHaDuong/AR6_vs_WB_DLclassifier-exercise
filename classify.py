@@ -4,15 +4,15 @@ Created on Tue May  9 21:02:33 2023
 @author: haduong@centre-cired.fr
 """
 
-import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
 
-# load the data
-data = np.load('data.npy')
-labels = np.load('labels.npy')
+from data import get_data
+
+# data, labels = get_data(['Population'], ['population'])
+data, labels = get_data()
 
 # split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)

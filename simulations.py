@@ -7,7 +7,7 @@ Created on Thu Apr 28 2023
 
 import pandas as pd
 import numpy as np
-
+from ar6_trajectories import df
 
 # %% Keep only the rows describing the indicators
 
@@ -31,7 +31,7 @@ def _select(df, indicators):
 
     result = df[mask]
 
-    assert list(result.index.get_level_values('Variable').unique()) == indicators, "Incorrect Variables selection."
+    assert set(result.index.get_level_values('Variable').unique()) == set(indicators), "Incorrect Variables selection."
     assert len(result['Unit'].unique()) == len(indicators), "More units than variables."
     assert not result.empty, "The result is empty. Too many indicators?"
 
@@ -40,7 +40,7 @@ def _select(df, indicators):
 
 # %% Make a numpy array of 25-years trajectories
 
-def array_simulations(df, indicators):
+def get_simulations(indicators):
     subdf = _select(df, indicators)
 
     width = 6   # At five years step, twenty five years including extremities
