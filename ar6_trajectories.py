@@ -135,5 +135,5 @@ def root_variables(df):
     """
     variables = get_variables(df)
     roots = [s for s in variables if '|' not in s]
-    return top_variables(-1)[roots].sort_values(ascending=False)
+    return top_variables(df, -1)[roots].sort_values(ascending=False)
 
