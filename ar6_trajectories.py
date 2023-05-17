@@ -6,7 +6,10 @@ The multiindex is Model - Scenario - Region - Variable.
 Clean data to ensure consistent units.
 Keep years at a five time step between 2005 and 2050.
 Provide auxilliary functions to explore the list of variables.
-Database online at https://data.ece.iiasa.ac.at/ar6/#/docs.
+
+References:
+Database online at https://data.ece.iiasa.ac.at/ar6/#/docs
+CSV data format at https://pyam-iamc.readthedocs.io/en/stable/data.html
 
 Example use:
 from ar6_scenario_database_iso3 import df

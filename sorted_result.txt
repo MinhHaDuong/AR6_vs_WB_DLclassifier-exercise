@@ -1,0 +1,16 @@
+                                                 Variables  Test loss  Accuracy
+       ('gdp', 'population', 'primary_energy_consumption')   0.056532  0.984048
+('co2', 'gdp', 'population', 'primary_energy_consumption')   0.045498  0.983164
+              ('co2', 'gdp', 'primary_energy_consumption')   0.055030  0.982314
+                              ('co2', 'gdp', 'population')   0.057367  0.980276
+       ('co2', 'population', 'primary_energy_consumption')   0.075616  0.976985
+                     ('gdp', 'primary_energy_consumption')   0.075190  0.976793
+                                     ('gdp', 'population')   0.085147  0.975803
+                                            ('co2', 'gdp')   0.067086  0.975333
+              ('population', 'primary_energy_consumption')   0.104851  0.971055
+                                     ('co2', 'population')   0.102256  0.965990
+                     ('co2', 'primary_energy_consumption')   0.094673  0.964737
+                                                  ('gdp',)   0.118750  0.961571
+                           ('primary_energy_consumption',)   0.133000  0.953643
+                                                  ('co2',)   0.151896  0.942401
+                                           ('population',)   0.185791  0.933980

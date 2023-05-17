@@ -48,9 +48,8 @@ def _get_dataframe(filename):
 #%%
 
 def _get_values_forward(group):
-    group = group.reset_index()
-    # Set 'Year' as the index so we can use .loc
-    group = group.set_index('year')
+    group = group.reset_index().set_index('year')
+    group = group.drop(columns=['country', 'variable'])
     group['value_Y+5'] = group['value'].reindex(group.index + 5).values
     group['value_Y+10'] = group['value'].reindex(group.index + 10).values
     group['value_Y+15'] = group['value'].reindex(group.index + 15).values
@@ -60,19 +59,24 @@ def _get_values_forward(group):
 
 
 def _shake(df):
-    df_reset = df.reset_index()  # Reset the index so 'country' and 'year' become regular columns
+    # Melt the dataframe from wide to long format
+    result = df.reset_index().melt(
+        id_vars=['country', 'year'],
+        value_vars=df.columns,
+        var_name='variable',
+        value_name='value')
+    result.set_index(['country', 'variable', 'year'], inplace=True)
+
+    # Create the trajectories
+    result = result.groupby(['country', 'variable']).apply(_get_values_forward)
+    result = result.reorder_levels(['country', 'year', 'variable']).sort_index()
+
+    # Cleanup trajectories with NaNs and zeros
+    result = result.dropna()
+    result = result[(result != 0).all(axis=1)]
     
-    df_long = df_reset.melt(id_vars=['country', 'year'],
-                            value_vars=df.columns,
-                            var_name='variable',
-                            value_name='value')
+    return result
 
-    # Now set 'country', 'year', and 'variable' as the new index
-    df_long.set_index(['country', 'variable', 'year'], inplace=True)
-
-    df_long = df_long.groupby(['country', 'variable']).apply(_get_values_forward)
-    df_long = df_long.drop(df_long.columns[[0, 1]], axis=1).dropna()
-    return df_long.reorder_levels(['country', 'year', 'variable']).sort_index()
 
 # %%
 
@@ -87,5 +91,3 @@ except:
         print('Cleaned OWID trajectories saved successfully!')
     except Exception as e:
         print('An error occurred while saving the OWID trajectories:', e)
-
-        

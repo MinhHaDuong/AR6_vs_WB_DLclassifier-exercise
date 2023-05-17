@@ -17,33 +17,35 @@ def _select(df, indicators):
     """Return a masked dataframe with rows to include the variables in the indicators list.
 
     For any pair (country, year),
-    the result contains the row (country, v, year) for any v in indicators
+    the result contains the rows (country, year, v) for any v in indicators
     the result does not contains any other row
-    the result is the largest such subdataframe.
+    the result is the largest such subdataframe of df
     """
-    assert not df.empty, "The dataframe to select from must not be empty."
     assert indicators, "Indicators must be a non-empty list."
+    assert not df.empty, "DataFrame to select from must not be empty."
+    assert not df.isna().any().any(), "DataFrame must not contains NaN values"
+    assert not (df == 0).any().any(), "DataFrame must not contains zero values"
     
     mask = pd.Series(
         df.index.get_level_values('variable').isin(indicators),
         index=df.index)
-    group_counts = mask.groupby(level=[0, 1]).transform('sum')
+    group_counts = mask.groupby(level=['country', 'year']).transform('sum')
     mask[group_counts != len(indicators)] = False
 
     result = df[mask]
 
     assert set(result.index.get_level_values('variable').unique()) == set(indicators), "Incorrect Variables selection."
-    assert not result.empty, "The result is empty. Too many indicators?"
+    assert not result.empty, "The result is empty. Match the list of indicators to observations data."
 
     return result
 
 
-def get_observations(indicators):
+def get_observations(indicators, units=1):
     subdf = _select(df, indicators)
+    subdf = subdf.div(units, level='variable', axis=0)
 
     result = np.array([
         a
-        for _, a in subdf.groupby(level=[0, 1])
-        if not (np.isnan(a).any() | (a == 0).any()).any()
+        for _, a in subdf.groupby(level=['country', 'year'])
         ])
     return result

@@ -1,0 +1,16 @@
+co2,gdp,population,primary_energy_consumption,Variables,Test loss,Accuracy
+True,False,False,False,"('co2',)",0.15189619362354279,0.9424012899398804
+False,True,False,False,"('gdp',)",0.11875001341104507,0.961570680141449
+False,False,True,False,"('population',)",0.18579111993312836,0.933980405330658
+False,False,False,True,"('primary_energy_consumption',)",0.13299962878227234,0.9536434412002563
+True,True,False,False,"('co2', 'gdp')",0.06708627194166183,0.9753332138061523
+True,False,True,False,"('co2', 'population')",0.10225557535886765,0.9659897089004517
+True,False,False,True,"('co2', 'primary_energy_consumption')",0.09467312693595886,0.964736819267273
+False,True,True,False,"('gdp', 'population')",0.085147425532341,0.975803017616272
+False,True,False,True,"('gdp', 'primary_energy_consumption')",0.07519012689590454,0.9767928719520569
+False,False,True,True,"('population', 'primary_energy_consumption')",0.10485075414180756,0.971055269241333
+True,True,True,False,"('co2', 'gdp', 'population')",0.057366713881492615,0.9802764654159546
+True,True,False,True,"('co2', 'gdp', 'primary_energy_consumption')",0.05502976104617119,0.9823142290115356
+True,False,True,True,"('co2', 'population', 'primary_energy_consumption')",0.07561646401882172,0.9769848585128784
+False,True,True,True,"('gdp', 'population', 'primary_energy_consumption')",0.05653182789683342,0.9840481877326965
+True,True,True,True,"('co2', 'gdp', 'population', 'primary_energy_consumption')",0.0454978309571743,0.9831643104553223

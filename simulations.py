@@ -40,15 +40,16 @@ def _select(df, indicators):
 
 # %% Make a numpy array of 25-years trajectories
 
-def get_simulations(indicators):
-    subdf = _select(df, indicators)
+def get_simulations(indicators, units=1):
+    subdf = _select(df, indicators).drop(columns=['Unit'])
+    subdf = subdf.div(units, level='Variable', axis=0)
 
     width = 6   # At five years step, twenty five years including extremities
     num_trajectories = df.shape[1] - width
     result = np.array([
         a[:, i:i + width]
-        for _, trajectory in subdf.groupby(level=[0, 1, 2])
-        for a in [trajectory.iloc[:, 1:].values]
+        for _, trajectory in subdf.groupby(level=['Model', 'Scenario', 'Region'])
+        for a in [trajectory.values]
         for i in range(num_trajectories)
         if not (np.isnan(a) | (a == 0)).any()
         ])
