@@ -12,16 +12,17 @@ Database online at https://data.ece.iiasa.ac.at/ar6/#/docs
 CSV data format at https://pyam-iamc.readthedocs.io/en/stable/data.html
 
 Example use:
-from ar6_scenario_database_iso3 import df
+from ar6_trajectories import df_trajectories
 
 Created on Thu Apr 28 2023
 @author: haduong@centre-cired.fr
 """
 
+import pickle
 import pandas as pd
 
-filename_raw = "AR6_Scenarios_Database_ISO3_v1.1.csv"
-filename_clean = "ar6_trajectories.pkl"
+FILENAME_RAW = "AR6_Scenarios_Database_ISO3_v1.1.csv"
+FILENAME_CLEAN = "ar6_trajectories.pkl"
 
 # %% Import the data
 
@@ -89,16 +90,18 @@ def _clean(df):
 
 
 try:
-    df = pd.read_pickle(filename_clean)
-    print("Successfully read cleaned AR6 trajectories from file", filename_clean)
-except:
-    print("Unable to access ", filename_clean, ". Attempting to create it.")
+    df_trajectories = pd.read_pickle(FILENAME_CLEAN)
+    print("Successfully read cleaned AR6 trajectories from file", FILENAME_CLEAN)
+except (IOError, EOFError, pickle.UnpicklingError) as e_read:
+    print(
+        "Unable to access ", FILENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
+    )
     try:
-        df = _clean(_get_dataframe(filename_raw))
-        df.to_pickle(filename_clean)
+        df_trajectories = _clean(_get_dataframe(FILENAME_RAW))
+        df_trajectories.to_pickle(FILENAME_CLEAN)
         print("Cleaned AR6 trajectories saved successfully!")
-    except Exception as e:
-        print("An error occurred while saving the AR6 trajectories:", e)
+    except Exception as e_write:
+        print("An error occurred while saving the AR6 trajectories:", e_write)
 
 
 def get_models(df):

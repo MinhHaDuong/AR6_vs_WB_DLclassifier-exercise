@@ -7,7 +7,7 @@ Created on Thu Apr 28 2023
 
 import pandas as pd
 import numpy as np
-from ar6_trajectories import df
+from ar6_trajectories import df_trajectories
 
 # %% Keep only the rows describing the indicators
 
@@ -44,11 +44,11 @@ def _select(df, indicators):
 
 
 def get_simulations(indicators, units=1):
-    subdf = _select(df, indicators).drop(columns=["Unit"])
+    subdf = _select(df_trajectories, indicators).drop(columns=["Unit"])
     subdf = subdf.div(units, level="Variable", axis=0)
 
     width = 6  # At five years step, twenty five years including extremities
-    num_trajectories = df.shape[1] - width
+    num_trajectories = df_trajectories.shape[1] - width
     result = np.array(
         [
             a[:, i : i + width]
