@@ -6,8 +6,11 @@ Created on Tue May  9 19:43:16 2023
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+
 from simulations import get_simulations
 from observations import get_observations
+from matplotlib.collections import LineCollection
 
 
 # %% This is a list not a set, order matters when we store in an numpy array
@@ -52,11 +55,25 @@ units_sim = pd.Series(reference_levels, index=indicators_simulations)
 #     return arrays / rotated
 
 
-def get_data(isim=indicators_simulations, iobs=indicators_observations):
-    print("Simulations variables", isim)
-    print("Observation variables", iobs)
+def get_data(isim=None, iobs=None):
+    """
+    Combine simulations and observations.
+    
+    Label simulations as 0 and observations as 1.
+    Return a tuple of two numpy arrays of the same length: data, labels.
+    If called with no argument, will use all indicators.
+    Assumes that the two arguments are aligned lists of variables.
+    """
+    if isim is None:
+        isim=indicators_simulations
+    if iobs is None:
+        iobs=indicators_observations
+
     simulations = get_simulations(isim, units_sim)
     observations = get_observations(iobs, units_obs)
+
+    print(len(simulations), "instances of simulations variables", isim)
+    print(len(observations), "instances of observation variables", iobs)
 
     labels = np.concatenate([np.zeros(len(simulations)), np.ones(len(observations))])
 
@@ -65,3 +82,49 @@ def get_data(isim=indicators_simulations, iobs=indicators_observations):
     data = data.reshape(data.shape[0], -1)
 
     return data, labels
+
+
+# %% Verify the data. We expect to see normalization
+
+def compare_data(sim='Population', obs='population'):
+    data, labels = get_data([sim], [obs])
+
+    num_obs = int(sum(labels))
+    num_sim = int(len(labels) - num_obs)
+
+    subsampling = 3
+    data_sim = data[0:num_sim][::subsampling, :]
+    data_obs = data[num_sim:][::subsampling, :]
+
+    matrix1 = data_obs
+    matrix2 = data_sim
+
+    x = np.arange(matrix1.shape[1])
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5))  # create 2 subplots side by side
+
+    titles = ["Observations", "Simulations"]
+
+    for idx, (ax, matrix) in enumerate(zip(axs, [matrix1, matrix2])):
+        lines = [list(zip(x, matrix[i, :])) for i in range(matrix.shape[0])]
+        
+        lc = LineCollection(lines, linewidths=1, alpha=0.5)
+        ax.add_collection(lc)
+        
+        ax.set_xlim(x.min(), x.max())
+        ax.set_ylim(matrix.min(), matrix.max())
+        
+        # Set labels
+        ax.set_xlabel("5 years step")
+        ax.set_ylabel("Fraction of world 1990")
+        ax.set_title(titles[idx])
+
+ 
+    plt.suptitle(sim)
+    plt.tight_layout()
+    plt.show()
+    
+compare_data("Emissions|CO2", "co2")
+compare_data("GDP|MER", "gdp")
+compare_data("Population", "population")
+compare_data("Primary Energy", "primary_energy_consumption")
