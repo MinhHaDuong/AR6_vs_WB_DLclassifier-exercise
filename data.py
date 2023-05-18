@@ -14,36 +14,33 @@ from observations import get_observations
 
 indicators_simulations = [
     "Emissions|CO2",  # total net-CO2 emissions from all sources, Mt CO2/yr
-    "GDP|MER",        # GDP at market exchange rate, billion US$2010/yr
-#    "GDP|PPP",
+    "GDP|MER",  # GDP at market exchange rate, billion US$2010/yr
+    #    "GDP|PPP",
     "Population",
-    "Primary Energy" #,
-#    "Secondary energy",
-#    "Final energy",
-#    "Capacity|Electricity",
-#    "Investment",
-#    "Consumption",
-#    "Land Cover|Cropland",
-#    "Land Cover|Pasture",
-#    "Land Cover|Forest",
+    "Primary Energy"  # ,
+    #    "Secondary energy",
+    #    "Final energy",
+    #    "Capacity|Electricity",
+    #    "Investment",
+    #    "Consumption",
+    #    "Land Cover|Cropland",
+    #    "Land Cover|Pasture",
+    #    "Land Cover|Forest",
+]
+
+indicators_observations = ["co2", "gdp", "population", "primary_energy_consumption"]
+
+reference_levels = np.array(
+    [  # World 1990 from ourworldindata.org
+        27630,  # Emissions|CO2       Mt CO2/yr
+        35850,  # GDP|MER             billion US$2010/yr
+        5320,  # Population          million
+        343.9,  # Primary Energy      EJ/yr,    95527 TWh
     ]
+)
 
-indicators_observations = [
-    'co2',
-    'gdp',
-    'population',
-    'primary_energy_consumption'
-    ]
-
-reference_levels = np.array([          # World 1990 from ourworldindata.org
-    27630,  # Emissions|CO2       Mt CO2/yr
-    35850,  # GDP|MER             billion US$2010/yr
-    5320,   # Population          million
-    343.9   # Primary Energy      EJ/yr,    95527 TWh
-    ])
-
-units_obs = pd.Series(reference_levels, index = indicators_observations)
-units_sim = pd.Series(reference_levels, index = indicators_simulations)
+units_obs = pd.Series(reference_levels, index=indicators_observations)
+units_sim = pd.Series(reference_levels, index=indicators_simulations)
 
 # No need to normalize
 # most of the data is in [0, 1] since we scale each variable
@@ -56,17 +53,15 @@ units_sim = pd.Series(reference_levels, index = indicators_simulations)
 
 
 def get_data(isim=indicators_simulations, iobs=indicators_observations):
-    print('Simulations variables', isim)
-    print('Observation variables', iobs)
+    print("Simulations variables", isim)
+    print("Observation variables", iobs)
     simulations = get_simulations(isim, units_sim)
     observations = get_observations(iobs, units_obs)
 
-    labels = np.concatenate([
-        np.zeros(len(simulations)),
-        np.ones(len(observations))])
+    labels = np.concatenate([np.zeros(len(simulations)), np.ones(len(observations))])
 
     data = np.concatenate((simulations, observations))
-#   data = _as_change(data)
+    #   data = _as_change(data)
     data = data.reshape(data.shape[0], -1)
 
     return data, labels

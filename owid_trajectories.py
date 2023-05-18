@@ -24,57 +24,60 @@ filename_clean = "owid_trajectories.pkl"
 
 
 def _get_dataframe(filename):
-# Note: We would prefer to use nullable integers than floats but Pandas 1.x has only NaN floats.
+    # Note: We would prefer to use nullable integers than floats but Pandas 1.x has only NaN floats.
     coltypes = {
-        'country': 'category',
-        'year': 'int',
-        'population': 'float32',
-        'gdp': 'float32',
-        'co2': 'float32',
-        'primary_energy_consumption': 'float32'}
+        "country": "category",
+        "year": "int",
+        "population": "float32",
+        "gdp": "float32",
+        "co2": "float32",
+        "primary_energy_consumption": "float32",
+    }
 
     units = {
-        'population': 1E6,                    # Population in Million
-        'gdp': 1E9,                           # GDP in billion  $ (international 2011)
-        'co2': 1,                             # CO2 Mt 
-        'primary_energy_consumption': 277.8}  # Primary energy in Ej from TWh
-    
-    return pd.read_csv(
-        filename_raw,
-        index_col=[0, 1],
-        usecols=coltypes.keys(),
-        dtype=coltypes).div(pd.Series(units))
+        "population": 1e6,  # Population in Million
+        "gdp": 1e9,  # GDP in billion  $ (international 2011)
+        "co2": 1,  # CO2 Mt
+        "primary_energy_consumption": 277.8,
+    }  # Primary energy in Ej from TWh
 
-#%%
+    return pd.read_csv(
+        filename_raw, index_col=[0, 1], usecols=coltypes.keys(), dtype=coltypes
+    ).div(pd.Series(units))
+
+
+# %%
+
 
 def _get_values_forward(group):
-    group = group.reset_index().set_index('year')
-    group = group.drop(columns=['country', 'variable'])
-    group['value_Y+5'] = group['value'].reindex(group.index + 5).values
-    group['value_Y+10'] = group['value'].reindex(group.index + 10).values
-    group['value_Y+15'] = group['value'].reindex(group.index + 15).values
-    group['value_Y+20'] = group['value'].reindex(group.index + 20).values
-    group['value_Y+25'] = group['value'].reindex(group.index + 25).values
+    group = group.reset_index().set_index("year")
+    group = group.drop(columns=["country", "variable"])
+    group["value_Y+5"] = group["value"].reindex(group.index + 5).values
+    group["value_Y+10"] = group["value"].reindex(group.index + 10).values
+    group["value_Y+15"] = group["value"].reindex(group.index + 15).values
+    group["value_Y+20"] = group["value"].reindex(group.index + 20).values
+    group["value_Y+25"] = group["value"].reindex(group.index + 25).values
     return group
 
 
 def _shake(df):
     # Melt the dataframe from wide to long format
     result = df.reset_index().melt(
-        id_vars=['country', 'year'],
+        id_vars=["country", "year"],
         value_vars=df.columns,
-        var_name='variable',
-        value_name='value')
-    result.set_index(['country', 'variable', 'year'], inplace=True)
+        var_name="variable",
+        value_name="value",
+    )
+    result.set_index(["country", "variable", "year"], inplace=True)
 
     # Create the trajectories
-    result = result.groupby(['country', 'variable']).apply(_get_values_forward)
-    result = result.reorder_levels(['country', 'year', 'variable']).sort_index()
+    result = result.groupby(["country", "variable"]).apply(_get_values_forward)
+    result = result.reorder_levels(["country", "year", "variable"]).sort_index()
 
     # Cleanup trajectories with NaNs and zeros
     result = result.dropna()
     result = result[(result != 0).all(axis=1)]
-    
+
     return result
 
 
@@ -82,12 +85,12 @@ def _shake(df):
 
 try:
     df = pd.read_pickle(filename_clean)
-    print('Successfully read OWID trajectories from file', filename_clean)
+    print("Successfully read OWID trajectories from file", filename_clean)
 except:
-    print('Unable to access ', filename_clean, '. Attempting to create it.')
+    print("Unable to access ", filename_clean, ". Attempting to create it.")
     try:
         df = _shake(_get_dataframe(filename_raw))
         df.to_pickle(filename_clean)
-        print('Cleaned OWID trajectories saved successfully!')
+        print("Cleaned OWID trajectories saved successfully!")
     except Exception as e:
-        print('An error occurred while saving the OWID trajectories:', e)
+        print("An error occurred while saving the OWID trajectories:", e)

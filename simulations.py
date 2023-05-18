@@ -22,17 +22,19 @@ def _select(df, indicators):
     """
     assert not df.empty, "The dataframe to select from must not be empty."
     assert indicators, "Indicators must be a non-empty list."
-    
+
     mask = pd.Series(
-        df.index.get_level_values('Variable').isin(indicators),
-        index=df.index)
-    group_counts = mask.groupby(level=[0, 1, 2]).transform('sum')
+        df.index.get_level_values("Variable").isin(indicators), index=df.index
+    )
+    group_counts = mask.groupby(level=[0, 1, 2]).transform("sum")
     mask[group_counts != len(indicators)] = False
 
     result = df[mask]
 
-    assert set(result.index.get_level_values('Variable').unique()) == set(indicators), "Incorrect Variables selection."
-    assert len(result['Unit'].unique()) == len(indicators), "More units than variables."
+    assert set(result.index.get_level_values("Variable").unique()) == set(
+        indicators
+    ), "Incorrect Variables selection."
+    assert len(result["Unit"].unique()) == len(indicators), "More units than variables."
     assert not result.empty, "The result is empty. Too many indicators?"
 
     return result
@@ -40,17 +42,20 @@ def _select(df, indicators):
 
 # %% Make a numpy array of 25-years trajectories
 
-def get_simulations(indicators, units=1):
-    subdf = _select(df, indicators).drop(columns=['Unit'])
-    subdf = subdf.div(units, level='Variable', axis=0)
 
-    width = 6   # At five years step, twenty five years including extremities
+def get_simulations(indicators, units=1):
+    subdf = _select(df, indicators).drop(columns=["Unit"])
+    subdf = subdf.div(units, level="Variable", axis=0)
+
+    width = 6  # At five years step, twenty five years including extremities
     num_trajectories = df.shape[1] - width
-    result = np.array([
-        a[:, i:i + width]
-        for _, trajectory in subdf.groupby(level=['Model', 'Scenario', 'Region'])
-        for a in [trajectory.values]
-        for i in range(num_trajectories)
-        if not (np.isnan(a) | (a == 0)).any()
-        ])
+    result = np.array(
+        [
+            a[:, i : i + width]
+            for _, trajectory in subdf.groupby(level=["Model", "Scenario", "Region"])
+            for a in [trajectory.values]
+            for i in range(num_trajectories)
+            if not (np.isnan(a) | (a == 0)).any()
+        ]
+    )
     return result
