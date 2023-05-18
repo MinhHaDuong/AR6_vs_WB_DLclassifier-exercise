@@ -7,3 +7,5 @@ backups
 .spyproject/config/workspace.ini
 *.png
 *.txt
+attic/
+trash/
