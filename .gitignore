@@ -5,4 +5,5 @@ backups
 *.npy
 *.pkl
 .spyproject/config/workspace.ini
-
+*.png
+*.txt
