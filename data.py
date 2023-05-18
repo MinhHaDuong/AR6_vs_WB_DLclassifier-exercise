@@ -58,16 +58,16 @@ units_sim = pd.Series(reference_levels, index=indicators_simulations)
 def get_data(isim=None, iobs=None):
     """
     Combine simulations and observations.
-    
+
     Label simulations as 0 and observations as 1.
     Return a tuple of two numpy arrays of the same length: data, labels.
     If called with no argument, will use all indicators.
     Assumes that the two arguments are aligned lists of variables.
     """
     if isim is None:
-        isim=indicators_simulations
+        isim = indicators_simulations
     if iobs is None:
-        iobs=indicators_observations
+        iobs = indicators_observations
 
     simulations = get_simulations(isim, units_sim)
     observations = get_observations(iobs, units_obs)
@@ -86,7 +86,8 @@ def get_data(isim=None, iobs=None):
 
 # %% Verify the data. We expect to see normalization
 
-def compare_data(sim='Population', obs='population'):
+
+def compare_data(sim="Population", obs="population"):
     data, labels = get_data([sim], [obs])
 
     num_obs = int(sum(labels))
@@ -107,23 +108,23 @@ def compare_data(sim='Population', obs='population'):
 
     for idx, (ax, matrix) in enumerate(zip(axs, [matrix1, matrix2])):
         lines = [list(zip(x, matrix[i, :])) for i in range(matrix.shape[0])]
-        
+
         lc = LineCollection(lines, linewidths=1, alpha=0.5)
         ax.add_collection(lc)
-        
+
         ax.set_xlim(x.min(), x.max())
         ax.set_ylim(matrix.min(), matrix.max())
-        
+
         # Set labels
         ax.set_xlabel("5 years step")
         ax.set_ylabel("Fraction of world 1990")
         ax.set_title(titles[idx])
 
- 
     plt.suptitle(sim)
     plt.tight_layout()
     plt.show()
-    
+
+
 compare_data("Emissions|CO2", "co2")
 compare_data("GDP|MER", "gdp")
 compare_data("Population", "population")
