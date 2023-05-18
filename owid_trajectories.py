@@ -7,20 +7,19 @@ Cache the result in a .pkl file
 
 See OWID data pipeline https://docs.owid.io/projects/etl/en/latest/api/python/
 
-Usage: from owid_trajectories import df
+Usage: from owid_trajectories import df_trajectories
 
 Created on Thu Apr 20 15:03:33 2023
 @author: haduong@centre-cired.fr
 """
 
-
+import pickle
 import pandas as pd
 
 # Got it at  https://github.com/owid/co2-data/blob/master/owid-co2-data.csv
 # Units at https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv
-filename_raw = "owid-co2-data.csv"
-
-filename_clean = "owid_trajectories.pkl"
+FILENAME_RAW = "owid-co2-data.csv"
+FIlENAME_CLEAN = "owid_trajectories.pkl"
 
 
 def _get_dataframe(filename):
@@ -42,7 +41,7 @@ def _get_dataframe(filename):
     }  # Primary energy in Ej from TWh
 
     return pd.read_csv(
-        filename_raw, index_col=[0, 1], usecols=coltypes.keys(), dtype=coltypes
+        filename, index_col=[0, 1], usecols=coltypes.keys(), dtype=coltypes
     ).div(pd.Series(units))
 
 
@@ -84,13 +83,15 @@ def _shake(df):
 # %%
 
 try:
-    df = pd.read_pickle(filename_clean)
-    print("Successfully read OWID trajectories from file", filename_clean)
-except:
-    print("Unable to access ", filename_clean, ". Attempting to create it.")
+    df_trajectories = pd.read_pickle(FIlENAME_CLEAN)
+    print("Successfully read OWID trajectories from file", FIlENAME_CLEAN)
+except (IOError, EOFError, pickle.UnpicklingError) as e_read:
+    print(
+        "Unable to access ", FIlENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
+    )
     try:
-        df = _shake(_get_dataframe(filename_raw))
-        df.to_pickle(filename_clean)
+        df_trajectories = _shake(_get_dataframe(FILENAME_RAW))
+        df_trajectories.to_pickle(FIlENAME_CLEAN)
         print("Cleaned OWID trajectories saved successfully!")
     except Exception as e:
         print("An error occurred while saving the OWID trajectories:", e)
