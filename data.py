@@ -116,7 +116,7 @@ def compare_data(sim="Population", obs="population"):
         ax.set_ylim(matrix.min(), matrix.max())
 
         # Set labels
-        ax.set_xlabel("5 years step")
+        ax.set_xlabel("5 years period")
         ax.set_ylabel("Fraction of world 1990")
         ax.set_title(titles[idx])
 
