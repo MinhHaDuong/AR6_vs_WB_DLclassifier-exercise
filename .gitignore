@@ -9,3 +9,4 @@ backups
 *.txt
 attic/
 trash/
+result.csv
