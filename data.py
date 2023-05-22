@@ -7,10 +7,11 @@ Created on Tue May  9 19:43:16 2023
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
+from sklearn.model_selection import train_test_split
 
 from simulations import get_simulations
 from observations import get_observations
-from matplotlib.collections import LineCollection
 
 
 # %% This is a list not a set, order matters when we store in an numpy array
@@ -83,6 +84,11 @@ def get_data(isim=None, iobs=None, as_change=None):
     return data, labels
 
 
+def get_sets():
+    data, labels = get_data()
+    return train_test_split(data, labels, test_size=0.2, random_state=42)
+
+
 # %% Verify the data. We expect to see normalization
 
 
@@ -125,7 +131,7 @@ def compare_data(axs, sim="Population", obs="population", as_change=None, xlabel
 
 
 def figure(as_change=False, filename=None):
-    fig, axs = plt.subplots(4, 2, figsize=(12, 16))
+    _, axs = plt.subplots(4, 2, figsize=(12, 16))
     compare_data(axs[0, :], "Emissions|CO2", "co2", as_change=as_change)
     compare_data(axs[1, :], "Population", "population", as_change=as_change)
     compare_data(axs[2, :], "GDP|MER", "gdp", as_change=as_change)

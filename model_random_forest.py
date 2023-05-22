@@ -7,20 +7,15 @@ Created on Thu May 18 16:50:29 2023
 """
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, roc_auc_score
 from sklearn.model_selection import RandomizedSearchCV
-import scipy.stats as stats
+from scipy import stats
 
-from data import get_data
+from data import get_sets
 
 # %%
 
-data, labels = get_data()
-
-x_train, x_test, y_train, y_test = train_test_split(
-    data, labels, test_size=0.2, random_state=42
-)
+x_train, x_test, y_train, y_test = get_sets()
 
 # Initialize a Random Forest classifier
 model = RandomForestClassifier(

@@ -8,18 +8,13 @@ Created on Thu May 18 16:20:30 2023
 
 from sklearn import svm
 from sklearn.metrics import classification_report, roc_auc_score
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 
-from data import get_data
+from data import get_sets
 
 # %%
 
-data, labels = get_data()
-
-x_train, x_test, y_train, y_test = train_test_split(
-    data, labels, test_size=0.2, random_state=42
-)
+x_train, x_test, y_train, y_test = get_sets()
 
 
 # Initialize an SVM model
@@ -37,21 +32,6 @@ print(classification_report(y_test, y_pred))
 
 # Also compute the AUC score
 print("AUC score:", roc_auc_score(y_test, y_pred))
-
-"""
-23115 instances of simulations variables ['Emissions|CO2', 'GDP|MER', 'Population', 'Primary Energy']
-3018 instances of observation variables ['co2', 'gdp', 'population', 'primary_energy_consumption']
-              precision    recall  f1-score   support
-
-         0.0       0.99      0.97      0.98      4633
-         1.0       0.78      0.95      0.86       594
-
-    accuracy                           0.96      5227
-   macro avg       0.89      0.96      0.92      5227
-weighted avg       0.97      0.96      0.97      5227
-
-AUC score: 0.9594873114191051
-"""
 
 # %% Tune it
 

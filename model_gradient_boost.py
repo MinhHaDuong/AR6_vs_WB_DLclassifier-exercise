@@ -8,19 +8,14 @@ Created on Thu May 18 17:20:59 2023
 
 import xgboost as xgb
 from sklearn.metrics import classification_report, roc_auc_score
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import randint, uniform
 
-from data import get_data
+from data import get_sets
 
 # %%
 
-data, labels = get_data()
-
-x_train, x_test, y_train, y_test = train_test_split(
-    data, labels, test_size=0.2, random_state=42
-)
+x_train, x_test, y_train, y_test = get_sets()
 
 
 # Define the parameters for the GBM classifier
@@ -49,20 +44,6 @@ print(classification_report(y_test, y_pred))
 
 # Also compute the AUC score
 print("AUC score:", roc_auc_score(y_test, y_pred))
-
-# %%
-"""
-             precision    recall  f1-score   support
-
-         0.0       1.00      1.00      1.00      4633
-         1.0       1.00      0.99      1.00       594
-
-    accuracy                           1.00      5227
-   macro avg       1.00      1.00      1.00      5227
-weighted avg       1.00      1.00      1.00      5227
-
-AUC score: 0.9966329966329966
-"""
 
 # %% Tune it
 

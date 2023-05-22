@@ -18,7 +18,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import classification_report
 
-from data import get_data, indicators_simulations, indicators_observations
+from data import get_sets, indicators_simulations, indicators_observations
 
 
 # Multilayers perceptron
@@ -30,11 +30,7 @@ def classify(isim=None, iobs=None):
     if iobs is None:
         iobs = indicators_observations
 
-    data, labels = get_data(isim, iobs)
-
-    x_train, x_test, y_train, y_test = train_test_split(
-        data, labels, test_size=0.2, random_state=42
-    )
+    x_train, x_test, y_train, y_test = get_sets()
 
     model = Sequential()
     model.add(Dense(96, activation="relu", input_dim=data.shape[1]))
@@ -162,96 +158,3 @@ tuner.search(
 )
 
 tuner.results_summary()
-
-"""
-
-Trial 47 summary
-Hyperparameters:
-units_1: 96
-dropout_1: 0.0
-units_2: 128
-dropout_2: 0.30000000000000004
-learning_rate: 0.01
-Score: 0.9995813965797424
-
-Trial 35 summary
-Hyperparameters:
-units_1: 192
-dropout_1: 0.0
-units_2: 96
-dropout_2: 0.2
-learning_rate: 0.01
-Score: 0.9989245533943176
-
-Trial 41 summary
-Hyperparameters:
-units_1: 192
-dropout_1: 0.2
-units_2: 96
-dropout_2: 0.30000000000000004
-learning_rate: 0.01
-Score: 0.9988268613815308
-
-Trial 25 summary
-Hyperparameters:
-units_1: 192
-dropout_1: 0.0
-units_2: 128
-dropout_2: 0.30000000000000004
-learning_rate: 0.001
-Score: 0.9987591505050659
-
-Trial 12 summary
-Hyperparameters:
-units_1: 192
-dropout_1: 0.1
-units_2: 96
-dropout_2: 0.4
-learning_rate: 0.01
-Score: 0.9987215995788574
-
-Trial 17 summary
-Hyperparameters:
-units_1: 224
-dropout_1: 0.2
-units_2: 64
-dropout_2: 0.1
-learning_rate: 0.01
-Score: 0.9985978603363037
-
-Trial 20 summary
-Hyperparameters:
-units_1: 192
-dropout_1: 0.30000000000000004
-units_2: 96
-dropout_2: 0.0
-learning_rate: 0.001
-Score: 0.9985247254371643
-
-Trial 37 summary
-Hyperparameters:
-units_1: 128
-dropout_1: 0.1
-units_2: 64
-dropout_2: 0.4
-learning_rate: 0.001
-Score: 0.9983959197998047
-
-Trial 22 summary
-Hyperparameters:
-units_1: 128
-dropout_1: 0.2
-units_2: 96
-dropout_2: 0.2
-learning_rate: 0.001
-Score: 0.9982591271400452
-
-Trial 39 summary
-Hyperparameters:
-units_1: 32
-dropout_1: 0.1
-units_2: 96
-dropout_2: 0.0
-learning_rate: 0.01
-Score: 0.998193621635437
-"""

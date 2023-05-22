@@ -8,18 +8,14 @@ Created on Thu May 18 16:08:01 2023
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, roc_auc_score
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 
-from data import get_data
+from data import get_sets
 
 # %%
 
-data, labels = get_data()
+x_train, x_test, y_train, y_test = get_sets()
 
-x_train, x_test, y_train, y_test = train_test_split(
-    data, labels, test_size=0.2, random_state=42
-)
 
 # Initialize a Logistic Regression model
 # Note: regularization strength (C) and penalty tuned from cell below
@@ -36,19 +32,6 @@ print(classification_report(y_test, y_pred))
 
 # You can also compute the AUC (Area Under the Curve) score
 print("AUC score:", roc_auc_score(y_test, y_pred))
-
-"""
-            precision    recall  f1-score   support
-
-         0.0       0.99      0.99      0.99      4633
-         1.0       0.93      0.92      0.93       594
-
-    accuracy                           0.98      5227
-   macro avg       0.96      0.96      0.96      5227
-weighted avg       0.98      0.98      0.98      5227
-
-AUC score: 0.9552791022680943
-"""
 
 # %% Tune it
 
