@@ -18,6 +18,8 @@ import matplotlib.pyplot as plt
 
 from data import indicators_simulations, indicators_observations, get_data
 
+AS_CHANGE=False
+
 # %%
 
 # Define the parameters for the GBM classifier
@@ -46,7 +48,7 @@ for r in range(1, len(pairs) + 1):
     # Generate and print all subsets of size r
     for subset in itertools.combinations(pairs, r):
         isim, iobs = zip(*subset)
-        data, labels = get_data(isim, iobs)
+        data, labels = get_data(isim, iobs, as_change=AS_CHANGE)
         x_train, x_test, y_train, y_test = train_test_split(
             data, labels, test_size=0.2, random_state=42
         )
