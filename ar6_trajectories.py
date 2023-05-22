@@ -86,34 +86,39 @@ def _clean(df):
 
     # The unit 'US$2010/t or local currency' which is not unitary
     df = df.drop(df[df.index.get_level_values("Variable") == "Price|Carbon"].index)
-    
+
     # Fix rows with 1000x error in population units
-    scenarios = ['SSP2_1_75D-66', 'SSP2_2D-66', 'SSP2_BASE']
-    regions = ['CHN', 'GBR', 'KOR']
+    scenarios = ["SSP2_1_75D-66", "SSP2_2D-66", "SSP2_BASE"]
+    regions = ["CHN", "GBR", "KOR"]
     df.loc[
-        (df.index.get_level_values('Model') == 'TIAM-UCL 4.1.1') &
-        (df.index.get_level_values('Scenario').isin(scenarios)) &
-        (df.index.get_level_values('Region').isin(regions)) &
-        (df.index.get_level_values('Variable') == 'Population'),
-        "2005":"2050"
+        (df.index.get_level_values("Model") == "TIAM-UCL 4.1.1")
+        & (df.index.get_level_values("Scenario").isin(scenarios))
+        & (df.index.get_level_values("Region").isin(regions))
+        & (df.index.get_level_values("Variable") == "Population"),
+        "2005":"2050",
     ] *= 0.001
 
     # Fix rows with 1000x error in GDP|MER units
     df.loc[
-        (df.index.get_level_values('Model') == 'GCAM-KAIST 1.0') &
-        (df.index.get_level_values('Scenario').isin(['EN_NP_CurPol', 'EN_NP_UNDC'])) &
-        (df.index.get_level_values('Region') == 'KOR') &
-        (df.index.get_level_values('Variable') == 'GDP|MER'),
-        "2005":"2050"
+        (df.index.get_level_values("Model") == "GCAM-KAIST 1.0")
+        & (df.index.get_level_values("Scenario").isin(["EN_NP_CurPol", "EN_NP_UNDC"]))
+        & (df.index.get_level_values("Region") == "KOR")
+        & (df.index.get_level_values("Variable") == "GDP|MER"),
+        "2005":"2050",
     ] *= 0.001
 
     # Drop these rows, their error is not obviously 1000x
-    df.drop(df[
-        (df.index.get_level_values('Model').isin(['AIM/Enduse India 3.1', 'India MARKAL', 'MARKAL-India 1.0'])) &
-        (df.index.get_level_values('Region') == 'IND') &
-        (df.index.get_level_values('Variable') == 'GDP|MER')
+    df.drop(
+        df[
+            (
+                df.index.get_level_values("Model").isin(
+                    ["AIM/Enduse India 3.1", "India MARKAL", "MARKAL-India 1.0"]
+                )
+            )
+            & (df.index.get_level_values("Region") == "IND")
+            & (df.index.get_level_values("Variable") == "GDP|MER")
         ].index,
-        inplace=True
+        inplace=True,
     )
 
     if _check_units(df):

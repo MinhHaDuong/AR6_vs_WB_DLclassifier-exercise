@@ -45,10 +45,11 @@ reference_levels = np.array(
 units_obs = pd.Series(reference_levels, index=indicators_observations)
 units_sim = pd.Series(reference_levels, index=indicators_simulations)
 
+
 def _as_change(arrays):
     """Convert a vector of levels into a vector of initial level and factors."""
     rotated = np.roll(arrays, 1, axis=2)
-#    rotated[:, :, 0] = 1
+    #    rotated[:, :, 0] = 1
     return (arrays / rotated)[:, :, 1:]
 
 
@@ -111,7 +112,7 @@ def compare_data(axs, sim="Population", obs="population", as_change=None, xlabel
         ax.set_ylim(matrix.min(), matrix.max())
         if as_change:
             ax.set_ylim(0.5, 2)
-            ax.axhline(1, color='black', linewidth=ax.spines['top'].get_linewidth())
+            ax.axhline(1, color="black", linewidth=ax.spines["top"].get_linewidth())
 
         # Set labels
         if xlabel:
@@ -121,19 +122,26 @@ def compare_data(axs, sim="Population", obs="population", as_change=None, xlabel
         ax.set_xticks(x.astype(int))
 
     axs[0].set_ylim(axs[1].get_ylim())
-    
-    
+
+
 def figure(as_change=False, filename=None):
     fig, axs = plt.subplots(4, 2, figsize=(12, 16))
     compare_data(axs[0, :], "Emissions|CO2", "co2", as_change=as_change)
     compare_data(axs[1, :], "Population", "population", as_change=as_change)
     compare_data(axs[2, :], "GDP|MER", "gdp", as_change=as_change)
-    compare_data(axs[3, :], "Primary Energy", "primary_energy_consumption", as_change=as_change, xlabel=True)
+    compare_data(
+        axs[3, :],
+        "Primary Energy",
+        "primary_energy_consumption",
+        as_change=as_change,
+        xlabel=True,
+    )
     plt.tight_layout()
     if filename:
         plt.savefig(filename)
     else:
         plt.show()
+
 
 # figure(filename="fig1-levels.png")
 # figure(as_change=True, filename="fig2-changes.png")

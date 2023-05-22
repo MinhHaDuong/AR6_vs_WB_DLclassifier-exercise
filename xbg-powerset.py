@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 from data import indicators_simulations, indicators_observations, get_data
 
-AS_CHANGE=False
+AS_CHANGE = False
 
 # %%
 
