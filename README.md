@@ -1,11 +1,11 @@
-# Are IPCC AR6 scenarios realistic?
+# Comparing IPCC AR6 scenarios with IPAE observations
 
 Author: haduong@centre-cired.fr
 
 2023-05
 
 We define a trajectory as a matrix with 6 columns and up to 4 rows.
-The rows correspond to variables: CO2 emissions, GDP, populations, primary energy
+The rows correspond to variables: CO2 emissions, populations, GDP, primary energy
 The columns correspond to years, with a 5 years difference so that the trajectory is 25 years
 
 The simulation trajectories are picked from the IPCC AR6 national scenario database
@@ -15,10 +15,14 @@ We pool all the model, regions, years into two big sets of trajectories,
 and trained five kind of machine learning binary classifiers
 to distinguish simulations from observations.
 
-Examining the figures produced by data.py show that:
-- There are 'World' regions in the datasets.
+Cleanup to AR6 scenario data table:
+- Spelling discrepancies between Million and millions
+- Some energy data in PJ while most in EJ
 - There are problems with a few 'GDP|MER' simulation series.
 - There are problems with some 'Population' simulation series.
+
+Cleanup to co2-owid-data:
+- The "Country" column includes 'World', a variety of country groups, some with alternate definitions.
 
 Results of the various model_*.py shows that:
 - The GBM classifier works best. 

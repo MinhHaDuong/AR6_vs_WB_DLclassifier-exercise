@@ -105,7 +105,7 @@ The observations trajectories are picked from owid-co2 dataset
 We pool all the model, regions, years into two big sets of trajectories,
 and trained a GBM classifier to distinguish simulations from observations.
 
-Results shows that 
+Results shows that
 - Simulations are very distinguishable from observations.
 - Trajectories with the 'population' variable are more distinguishable that those without
 
@@ -128,15 +128,15 @@ with open("xbg-powerset.txt", "w", encoding="utf-8") as f:
 # %%
 
 
-def graph(score):
+def graph(score_name):
     plt.clf()
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
-    y0 = result[score].min() * 0.99
+    _, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
+    y0 = result[score_name].min() * 0.99
 
     for variable, ax in zip(result.index.names, axes.flatten()):
         # Filter the series for when the variable is True and False
-        true_values = result[score].xs(True, level=variable)
-        false_values = result[score].xs(False, level=variable)
+        true_values = result[score_name].xs(True, level=variable)
+        false_values = result[score_name].xs(False, level=variable)
         values = [true_values, false_values]
 
         ax.boxplot(values, labels=["In", "·Out"], positions=[1, 2])
