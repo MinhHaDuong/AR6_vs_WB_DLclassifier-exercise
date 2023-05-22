@@ -14,11 +14,10 @@ from tensorflow.keras import layers, metrics
 import tensorflow_addons as tfa
 from keras_tuner import RandomSearch
 from keras_tuner.engine.objective import Objective
-from sklearn.model_selection import train_test_split
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import classification_report
 
-from data import get_sets, indicators_simulations, indicators_observations
+from data import get_data, get_sets, indicators_simulations, indicators_observations
 
 
 # Multilayers perceptron
@@ -31,6 +30,8 @@ def classify(isim=None, iobs=None):
         iobs = indicators_observations
 
     x_train, x_test, y_train, y_test = get_sets()
+
+    data, labels = get_data()
 
     model = Sequential()
     model.add(Dense(96, activation="relu", input_dim=data.shape[1]))
@@ -90,15 +91,13 @@ classify(["Population"], ["population"])
 
 # %% Tune the model on the complete variables case
 
-data, labels = get_data()
-
-x_train, x_test, y_train, y_test = train_test_split(
-    data, labels, test_size=0.2, random_state=42
-)
+x_train, x_test, y_train, y_test = get_sets()
 
 
 def build_model(hp):
     model = tf.keras.models.Sequential()
+
+    data, labels = get_data()
     model.add(
         layers.Dense(
             units=hp.Int("units_1", min_value=32, max_value=256, step=32),
