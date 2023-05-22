@@ -83,7 +83,39 @@ def _clean(df):
     df["Unit"] = df["Unit"].str.replace("million tkm", "bn tkm/yr")
     df.loc[df["Unit"] == "million pkm", "2005":"2050"] *= 0.001
     df["Unit"] = df["Unit"].str.replace("million pkm", "bn pkm/yr")
+
+    # The unit 'US$2010/t or local currency' which is not unitary
     df = df.drop(df[df.index.get_level_values("Variable") == "Price|Carbon"].index)
+    
+    # Fix rows with 1000x error in population units
+    scenarios = ['SSP2_1_75D-66', 'SSP2_2D-66', 'SSP2_BASE']
+    regions = ['CHN', 'GBR', 'KOR']
+    df.loc[
+        (df.index.get_level_values('Model') == 'TIAM-UCL 4.1.1') &
+        (df.index.get_level_values('Scenario').isin(scenarios)) &
+        (df.index.get_level_values('Region').isin(regions)) &
+        (df.index.get_level_values('Variable') == 'Population'),
+        "2005":"2050"
+    ] *= 0.001
+
+    # Fix rows with 1000x error in GDP|MER units
+    df.loc[
+        (df.index.get_level_values('Model') == 'GCAM-KAIST 1.0') &
+        (df.index.get_level_values('Scenario').isin(['EN_NP_CurPol', 'EN_NP_UNDC'])) &
+        (df.index.get_level_values('Region') == 'KOR') &
+        (df.index.get_level_values('Variable') == 'GDP|MER'),
+        "2005":"2050"
+    ] *= 0.001
+
+    # Drop these rows, their error is not obviously 1000x
+    df.drop(df[
+        (df.index.get_level_values('Model').isin(['AIM/Enduse India 3.1', 'India MARKAL', 'MARKAL-India 1.0'])) &
+        (df.index.get_level_values('Region') == 'IND') &
+        (df.index.get_level_values('Variable') == 'GDP|MER')
+        ].index,
+        inplace=True
+    )
+
     if _check_units(df):
         print("Alert: At least one Variable using more than one Unit.")
     return df
@@ -99,7 +131,7 @@ except (IOError, EOFError, pickle.UnpicklingError) as e_read:
     try:
         df_trajectories = _clean(_get_dataframe(FILENAME_RAW))
         df_trajectories.to_pickle(FILENAME_CLEAN)
-        print("Cleaned AR6 trajectories saved successfully!")
+        print("Saved cleaned AR6 trajectories!")
     except Exception as e_write:
         print("An error occurred while saving the AR6 trajectories:", e_write)
 
