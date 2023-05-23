@@ -12,38 +12,15 @@ from simulations import get_simulations
 from observations import get_observations
 
 
-# %% This is a list not a set, order matters when we store in an numpy array
+# Source ourworldindata.org
+world_1990 = pd.Series({
+        "co2": 27630,   # Mt CO2/yr
+        "gdp": 35850,   # billion US$2010/yr
+        "pop": 5320,    # million people
+        "tpec": 343.9,  # EJ/yr, 95527 TWh
+    })
 
-indicators_simulations = [
-    "Emissions|CO2",  # total net-CO2 emissions from all sources, Mt CO2/yr
-    "GDP|MER",  # GDP at market exchange rate, billion US$2010/yr
-    #    "GDP|PPP",
-    "Population",
-    "Primary Energy"  # ,
-    #    "Secondary energy",
-    #    "Final energy",
-    #    "Capacity|Electricity",
-    #    "Investment",
-    #    "Consumption",
-    #    "Land Cover|Cropland",
-    #    "Land Cover|Pasture",
-    #    "Land Cover|Forest",
-]
-
-indicators_observations = ["co2", "gdp", "population", "primary_energy_consumption"]
-
-reference_levels = np.array(
-    [  # World 1990 from ourworldindata.org
-        27630,  # Emissions|CO2       Mt CO2/yr
-        35850,  # GDP|MER             billion US$2010/yr
-        5320,  # Population          million
-        343.9,  # Primary Energy      EJ/yr,    95527 TWh
-    ]
-)
-
-units_obs = pd.Series(reference_levels, index=indicators_observations)
-units_sim = pd.Series(reference_levels, index=indicators_simulations)
-
+all_vars = world_1990.index
 
 def _as_change(arrays):
     """Convert a vector of levels into a vector of initial level and factors."""
@@ -52,7 +29,7 @@ def _as_change(arrays):
     return (arrays / rotated)[:, :, 1:]
 
 
-def get_data(isim=None, iobs=None, as_change=None):
+def get_data(var=None, as_change=None):
     """
     Combine simulations and observations.
 
@@ -61,16 +38,13 @@ def get_data(isim=None, iobs=None, as_change=None):
     If called with no argument, will use all indicators.
     Assumes that the two arguments are aligned lists of variables.
     """
-    if isim is None:
-        isim = indicators_simulations
-    if iobs is None:
-        iobs = indicators_observations
+    if var is None:
+        var = all_vars
 
-    simulations = get_simulations(isim, units_sim)
-    observations = get_observations(iobs, units_obs)
+    simulations = get_simulations(var, units=world_1990)
+    observations = get_observations(var, units=world_1990)
 
-    print(len(simulations), "instances of simulations variables", isim)
-    print(len(observations), "instances of observation variables", iobs)
+    print(f"{var}    {len(simulations)} simulations, {len(observations)} observation sequences")
 
     labels = np.concatenate([np.zeros(len(simulations)), np.ones(len(observations))])
 
@@ -85,4 +59,3 @@ def get_data(isim=None, iobs=None, as_change=None):
 def get_sets():
     data, labels = get_data()
     return train_test_split(data, labels, test_size=0.2, random_state=42)
-

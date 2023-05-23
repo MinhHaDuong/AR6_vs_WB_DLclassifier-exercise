@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
+""" Align the simulations dataframe: return a dataframe of 25-year sequences
+Drop uninteresting variables
+Cache result on disk because the input df_trajectories has 3.9 million rows.
+
 Created on Tue May 23 12:57:57 2023
 
 @author: haduong@centre-cired.fr
@@ -14,21 +15,7 @@ FILENAME_CLEAN = "ar6_sequences.pkl"
 
 # %% Subsample the dataframe, too slow otherwise
 
-indicators = [
-    "Emissions|CO2",  # total net-CO2 emissions from all sources, Mt CO2/yr
-    "GDP|MER",  # GDP at market exchange rate, billion US$2010/yr
-    #    "GDP|PPP",
-    "Population",
-    "Primary Energy"  # ,
-    #    "Secondary energy",
-    #    "Final energy",
-    #    "Capacity|Electricity",
-    #    "Investment",
-    #    "Consumption",
-    #    "Land Cover|Cropland",
-    #    "Land Cover|Pasture",
-    #    "Land Cover|Forest",
-]
+indicators = ["co2", "gdp", "pop", "tpec"]
 
 
 def _get_values_forward(group):
@@ -50,13 +37,12 @@ def _shake(df):
         var_name="Year",
         value_name="Value",
     ).dropna()
-    
+  
     result["Year"] = result["Year"].astype(int)
     result.set_index(["Model", "Scenario", "Region", "Variable", "Year"], inplace=True)
 
     # Create the trajectories
     result = result.groupby(["Model", "Scenario", "Region", "Variable"]).apply(_get_values_forward)
-    result.drop(columns=['index'], inplace=True)
     result = result.reorder_levels(["Model", "Scenario", "Region", "Year", "Variable"]).sort_index()
 
     # Cleanup trajectories with NaNs and zeros
@@ -64,6 +50,14 @@ def _shake(df):
     result = result[(result != 0).all(axis=1)]
 
     return result
+
+# Development
+
+df = df_trajectories[df_trajectories.index.get_level_values("Variable").isin(indicators)]
+df = df.drop(columns=["Unit"])
+df = df.head(100)   # For development
+
+df3 = _shake(df)
 
 # %%
 
@@ -77,7 +71,6 @@ except (IOError, EOFError, pickle.UnpicklingError) as e_read:
     try:
         df = df_trajectories[df_trajectories.index.get_level_values("Variable").isin(indicators)]
         df = df.drop(columns=["Unit"])
-#        df = df.head(1000)   # For development
         
         df_sequences = _shake(df)
         df_sequences.to_pickle(FILENAME_CLEAN)

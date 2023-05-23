@@ -123,6 +123,13 @@ def _clean(df):
 
     if _check_units(df):
         print("Alert: At least one Variable using more than one Unit.")
+        
+    df = df.rename(index={
+        "Population": "pop",
+        "GDP|MER": "gdp", 
+        "Emissions|CO2": "co2",
+        "Primary Energy": "tpec"})
+
     return df
 
 

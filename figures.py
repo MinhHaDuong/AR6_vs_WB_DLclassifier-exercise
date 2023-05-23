@@ -13,8 +13,8 @@ from data import get_data
 # %% Verify the data: well normalized, no outliers, ...
 
 
-def compare_data(axs, sim="Population", obs="population", as_change=None, xlabel=None):
-    data, labels = get_data([sim], [obs], as_change)
+def compare_data(axs, var="pop", as_change=None, xlabel=None):
+    data, labels = get_data([var], as_change)
 
     num_obs = int(sum(labels))
     num_sim = int(len(labels) - num_obs)
@@ -27,7 +27,9 @@ def compare_data(axs, sim="Population", obs="population", as_change=None, xlabel
 
     x = np.arange(matrix1.shape[1])
 
-    titles = [obs + " observations", sim + " simulations"]
+    titles = [var + " observations", var + " simulations"]
+    if as_change:
+        titles = [s + " changes" for s in titles]
 
     for idx, (ax, matrix) in enumerate(zip(axs, [matrix1, matrix2])):
         lines = [list(zip(x, matrix[i, :])) for i in range(matrix.shape[0])]
@@ -57,16 +59,10 @@ def compare_data(axs, sim="Population", obs="population", as_change=None, xlabel
 
 def fig_lines(as_change=False, filename=None):
     _, axs = plt.subplots(4, 2, figsize=(12, 16))
-    compare_data(axs[0, :], "Emissions|CO2", "co2", as_change=as_change)
-    compare_data(axs[1, :], "Population", "population", as_change=as_change)
-    compare_data(axs[2, :], "GDP|MER", "gdp", as_change=as_change)
-    compare_data(
-        axs[3, :],
-        "Primary Energy",
-        "primary_energy_consumption",
-        as_change=as_change,
-        xlabel=True,
-    )
+    compare_data(axs[0, :], "co2", as_change=as_change)
+    compare_data(axs[1, :], "pop", as_change=as_change)
+    compare_data(axs[2, :], "gdp", as_change=as_change)
+    compare_data(axs[3, :], "tpec", as_change=as_change, xlabel=True)
     plt.tight_layout()
     if filename:
         plt.savefig(filename)
@@ -80,10 +76,10 @@ fig_lines(as_change=True, filename="fig2-changes.png")
 # %%
 
 
-def compute_data(sim, obs):
+def compute_data(var):
     # Compute for as_change=False
-    data, labels = get_data([sim], [obs])
-    data_change, _ = get_data([sim], [obs], as_change=True)
+    data, labels = get_data([var])
+    data_change, _ = get_data([var], as_change=True)
 
     num_obs = int(sum(labels))
     num_sim = int(len(labels) - num_obs)
@@ -112,12 +108,12 @@ def compute_data(sim, obs):
     return df_obs, df_sim
 
 
-def plot_data(ax, data_obs, data_sim, obs, sim, x_label, y_label, hline=None):
+def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
     # Plot mean versus standard deviation for observations and simulations
     ax.scatter(data_obs[x_label], data_obs[y_label], color='blue', alpha=0.3,
-               label=obs + ' observations')
+               label=var + ' observations')
     ax.scatter(data_sim[x_label], data_sim[y_label], color='red', alpha=0.1,
-               label=sim + ' simulations')
+               label=var + ' simulations')
 
     ax.set_xlabel(x_label.capitalize())
     ax.set_ylabel(y_label.capitalize())
@@ -127,23 +123,23 @@ def plot_data(ax, data_obs, data_sim, obs, sim, x_label, y_label, hline=None):
     ax.legend()
 
 
-def clouds(axs, sim, obs):
-    df_obs, df_sim = compute_data(sim, obs)
+def clouds(axs, var):
+    df_obs, df_sim = compute_data(var)
 
-    plot_data(axs[0], df_obs, df_sim, obs, sim, 'levels_mean', 'levels_std')
-    plot_data(axs[1], df_obs, df_sim, obs, sim, 'levels_mean', 'change_mean', hline=True)
-    plot_data(axs[2], df_obs, df_sim, obs, sim, 'levels_mean', 'change_std')
-    plot_data(axs[3], df_obs, df_sim, obs, sim, 'levels_std', 'change_mean', hline=True)
-    plot_data(axs[4], df_obs, df_sim, obs, sim, 'levels_std', 'change_std')
-    plot_data(axs[5], df_obs, df_sim, obs, sim, 'change_std', 'change_mean', hline=True)
+    plot_data(axs[0], df_obs, df_sim, var, 'levels_mean', 'levels_std')
+    plot_data(axs[1], df_obs, df_sim, var, 'levels_mean', 'change_mean', hline=True)
+    plot_data(axs[2], df_obs, df_sim, var, 'levels_mean', 'change_std')
+    plot_data(axs[3], df_obs, df_sim, var, 'levels_std', 'change_mean', hline=True)
+    plot_data(axs[4], df_obs, df_sim, var, 'levels_std', 'change_std')
+    plot_data(axs[5], df_obs, df_sim, var, 'change_std', 'change_mean', hline=True)
 
 
 def fig_scatter(filename=None):
     fig, axs = plt.subplots(4, 6, figsize=(36, 16))
-    clouds(axs[0, :], "Emissions|CO2", "co2")
-    clouds(axs[1, :], "Population", "population")
-    clouds(axs[2, :], "GDP|MER", "gdp")
-    clouds(axs[3, :], "Primary Energy", "primary_energy_consumption")
+    clouds(axs[0, :], "co2")
+    clouds(axs[1, :], "pop")
+    clouds(axs[2, :], "gdp")
+    clouds(axs[3, :], "tpec")
     plt.tight_layout()
     if filename:
         plt.savefig(filename)

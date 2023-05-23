@@ -16,7 +16,7 @@ from sklearn.metrics import classification_report, roc_auc_score
 
 import matplotlib.pyplot as plt
 
-from data import indicators_simulations, indicators_observations, get_data
+from data import get_data, all_vars
 
 AS_CHANGE = False
 
@@ -42,13 +42,10 @@ model = xgb.XGBClassifier(**params)
 result = pd.DataFrame(columns=["AUC", "F1"])
 result.index.name = "Variables"
 
-pairs = list(zip(indicators_simulations, indicators_observations))
-
-for r in range(1, len(pairs) + 1):
+for r in range(1, len(all_vars) + 1):
     # Generate and print all subsets of size r
-    for subset in itertools.combinations(pairs, r):
-        isim, iobs = zip(*subset)
-        data, labels = get_data(isim, iobs, as_change=AS_CHANGE)
+    for subset in itertools.combinations(all_vars, r):
+        data, labels = get_data(subset, as_change=AS_CHANGE)
         x_train, x_test, y_train, y_test = train_test_split(
             data, labels, test_size=0.2, random_state=42
         )
@@ -56,27 +53,19 @@ for r in range(1, len(pairs) + 1):
         y_pred = model.predict(x_test)
         score = classification_report(y_test, y_pred, output_dict=True)
         score["AUC-score"] = roc_auc_score(y_test, y_pred)
-        result.loc[str(iobs)] = [score["AUC-score"], score["weighted avg"]["f1-score"]]
+        result.loc[str(subset)] = [score["AUC-score"], score["weighted avg"]["f1-score"]]
         print(result, "\n")
 
 # %%
-for v in indicators_observations:
+for v in all_vars:
     result[v] = [v in i for i in result.index]
 
-result = result.reset_index().set_index(indicators_observations)
+result = result.reset_index().set_index(all_vars)
 
 # In case we run the above twice
 # result.drop(columns=indicators_observations, inplace=True)
 
 # %%
-
-result["Variables"] = result["Variables"].str.replace(
-    "primary_energy_consumption", "tpec"
-)
-result = result.rename_axis(index={"primary_energy_consumption": "tpec"})
-
-result["Variables"] = result["Variables"].str.replace("population", "pop")
-result = result.rename_axis(index={"population": "pop"})
 
 result["Variables"] = result["Variables"].str.replace(",)", ")")
 result["Variables"] = result["Variables"].str.replace("'", "")

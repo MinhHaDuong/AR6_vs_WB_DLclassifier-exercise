@@ -81,16 +81,27 @@ def _get_dataframe(filename):
         "primary_energy_consumption": "float32",
     }
 
+    df = pd.read_csv(
+        filename,
+        index_col=[0, 1],
+        usecols=coltypes.keys(),
+        dtype=coltypes
+        )
+
+    df = df.rename(columns={
+        "population": "pop",
+        "gdp": "gdp", 
+        "co2": "co2",
+        "primary_energy_consumption": "tpec"})
+    
     units = {
-        "population": 1e6,  # Population in Million
+        "pop": 1e6,  # Population in Million
         "gdp": 1e9,  # GDP in billion  $ (international 2011)
         "co2": 1,  # CO2 Mt
-        "primary_energy_consumption": 277.8,
+        "tpec": 277.8,
     }  # Primary energy in Ej from TWh
-
-    df = pd.read_csv(
-        filename, index_col=[0, 1], usecols=coltypes.keys(), dtype=coltypes
-    ).div(pd.Series(units))
+    
+    df = df.div(pd.Series(units))
 
     df = df[~df.index.get_level_values("country").isin(NOTCOUNTRY)]
 
@@ -102,8 +113,8 @@ def _get_dataframe(filename):
     for country, cut_year in cut_years.items():
         df = df[~((df['country'] == country) & (df['year'] <= cut_year))]
 
-    df = df.set_index(['country', 'year'])
-
+    df = df.reset_index().set_index(['country', 'year'])
+    
     return df
 
 
