@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 from data import get_data, all_vars
 
-AS_CHANGE = False
+AS_CHANGE = True
 
 # %%
 
@@ -43,7 +43,6 @@ result = pd.DataFrame(columns=["AUC", "F1"])
 result.index.name = "Variables"
 
 for r in range(1, len(all_vars) + 1):
-    # Generate and print all subsets of size r
     for subset in itertools.combinations(all_vars, r):
         data, labels = get_data(subset, as_change=AS_CHANGE)
         x_train, x_test, y_train, y_test = train_test_split(
@@ -53,28 +52,19 @@ for r in range(1, len(all_vars) + 1):
         y_pred = model.predict(x_test)
         score = classification_report(y_test, y_pred, output_dict=True)
         score["AUC-score"] = roc_auc_score(y_test, y_pred)
-        result.loc[str(subset)] = [score["AUC-score"], score["weighted avg"]["f1-score"]]
+        result.loc[str(subset)] = [
+            score["AUC-score"],
+            score["weighted avg"]["f1-score"],
+        ]
         print(result, "\n")
 
 # %%
-for v in all_vars:
-    result[v] = [v in i for i in result.index]
 
-result = result.reset_index().set_index(all_vars)
-
-# In case we run the above twice
-# result.drop(columns=indicators_observations, inplace=True)
-
-# %%
-
+result.reset_index(level=0, inplace=True)
 result["Variables"] = result["Variables"].str.replace(",)", ")")
 result["Variables"] = result["Variables"].str.replace("'", "")
+result.set_index("Variables", inplace=True)
 
-# %%
-
-result.to_csv("result.csv")
-
-# %%
 result_byF1 = result.sort_values(by="F1", ascending=False)
 result_byAUC = result.sort_values(by="AUC", ascending=False)
 
@@ -84,35 +74,77 @@ Are IPCC AR6 scenarios realistic?
 Author: haduong@centre-cired.fr
 Run saved: {datetime.datetime.now()}
 
-We define a trajectory as a matrix with 6 columns and up to 4 rows.
+We define a sequence as a matrix with 6 columns and up to 4 rows.
 The rows correspond to variables: CO2 emissions, GDP, populations, primary energy
 The columns correspond to years, with a 5 years difference so that the trajectory is 25 years
 
-The simulation trajectories are picked from the IPCC AR6 national scenario database
-The observations trajectories are picked from owid-co2 dataset
+The simulation sequences are picked from the IPCC AR6 national scenario database
+The observations sequences are picked from owid-co2 dataset
 
-We pool all the model, regions, years into two big sets of trajectories,
+We pool all the model, regions, years into two big sets of sequences,
 and trained a GBM classifier to distinguish simulations from observations.
 
 Results shows that
-- Simulations are very distinguishable from observations.
+- Simulations are very distinguishable from observations when looking at levels.
+- Simulations are less distinguishable from observations when looking at changes.
 - Trajectories with the 'population' variable are more distinguishable that those without
-
-Conclusion so far:
-    There is a bug in the 'Population' series.
 
 {result}
 
 Sorted by F1
-{result_byF1.to_string(index=False)}
+{result_byF1.to_string()}
 
 Sorted by AUC
-{result_byAUC.to_string(index=False)}
+{result_byAUC.to_string()}
 """
 
 print(message)
-with open("xbg-powerset.txt", "w", encoding="utf-8") as f:
+with open(f"xbg-powerset-change{AS_CHANGE}.txt", "w", encoding="utf-8") as f:
     print(message, file=f)
+
+# %%
+
+
+def clean(result):
+    if "level_0" in result.columns:
+        result = result.drop(columns="level_0")
+    if "index" in result.columns:
+        result = result.drop(columns="index")
+    for v in list(all_vars):
+        if v in result.columns:
+            result = result.drop(columns=v)
+    if "Variables" not in result.columns:
+        variables = [
+            subset
+            for r in range(1, len(all_vars) + 1)
+            for subset in itertools.combinations(all_vars, r)
+        ]
+        result["Variables"] = variables
+    return result
+
+
+result = clean(result)
+
+try:
+    result = result.reset_index()
+except ValueError:
+    print("Failed to reset_index. Any column names conflict with index levels?")
+
+try:
+    result = result.set_index("Variables")
+except KeyError:
+    print("Failed to set_index. Is Variable column present?")
+
+for v in list(all_vars):
+    print(f"Checking if we have column {v}")
+    if v not in result.columns:
+        print("... Creating it")
+        result[v] = [v in i for i in result.index]
+
+result = result.reset_index()  # Move "Variables" in the columns
+result.set_index(list(all_vars), inplace=True)
+
+clean(result)
 
 # %%
 
@@ -140,7 +172,7 @@ def graph(score_name):
         ax.set_ylabel(score)
 
     plt.tight_layout()
-    plt.savefig(f"single_variable_{score}.png")
+    plt.savefig(f"single_variable_{score_name}.png")
     plt.show()
 
 
