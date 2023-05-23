@@ -6,8 +6,6 @@ Created on Tue May  9 19:43:16 2023
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
 from sklearn.model_selection import train_test_split
 
 from simulations import get_simulations
@@ -88,66 +86,3 @@ def get_sets():
     data, labels = get_data()
     return train_test_split(data, labels, test_size=0.2, random_state=42)
 
-
-# %% Verify the data. We expect to see normalization
-
-
-def compare_data(axs, sim="Population", obs="population", as_change=None, xlabel=None):
-    data, labels = get_data([sim], [obs], as_change)
-
-    num_obs = int(sum(labels))
-    num_sim = int(len(labels) - num_obs)
-
-    data_sim = data[0:num_sim][::5, :]
-    data_obs = data[num_sim:][::3, :]
-
-    matrix1 = data_obs
-    matrix2 = data_sim
-
-    x = np.arange(matrix1.shape[1])
-
-    titles = [obs + " observations", sim + " simulations"]
-
-    for idx, (ax, matrix) in enumerate(zip(axs, [matrix1, matrix2])):
-        lines = [list(zip(x, matrix[i, :])) for i in range(matrix.shape[0])]
-
-        lc = LineCollection(lines, linewidths=1, alpha=0.3)
-        ax.add_collection(lc)
-
-        ax.set_xlim(x.min(), x.max())
-        ax.set_ylim(matrix.min(), matrix.max())
-        if as_change:
-            ax.set_ylim(0.5, 2)
-            ax.axhline(1, color="black", linewidth=ax.spines["top"].get_linewidth())
-
-        # Set labels
-        if xlabel:
-            ax.set_xlabel("5 years period")
-        ax.set_ylabel("Fraction of world 1990")
-        ax.set_title(titles[idx])
-        ax.set_xticks(x.astype(int))
-
-    axs[0].set_ylim(axs[1].get_ylim())
-
-
-def figure(as_change=False, filename=None):
-    _, axs = plt.subplots(4, 2, figsize=(12, 16))
-    compare_data(axs[0, :], "Emissions|CO2", "co2", as_change=as_change)
-    compare_data(axs[1, :], "Population", "population", as_change=as_change)
-    compare_data(axs[2, :], "GDP|MER", "gdp", as_change=as_change)
-    compare_data(
-        axs[3, :],
-        "Primary Energy",
-        "primary_energy_consumption",
-        as_change=as_change,
-        xlabel=True,
-    )
-    plt.tight_layout()
-    if filename:
-        plt.savefig(filename)
-    else:
-        plt.show()
-
-
-# figure(filename="fig1-levels.png")
-# figure(as_change=True, filename="fig2-changes.png")
