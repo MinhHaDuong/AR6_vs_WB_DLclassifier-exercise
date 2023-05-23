@@ -21,30 +21,7 @@ import pandas as pd
 FILENAME_RAW = "owid-co2-data.csv"
 FIlENAME_CLEAN = "owid_trajectories.pkl"
 
-
-def _get_dataframe(filename):
-    # Note: We would prefer to use nullable integers than floats but Pandas 1.x has only NaN floats.
-    coltypes = {
-        "country": "category",
-        "year": "int",
-        "population": "float32",
-        "gdp": "float32",
-        "co2": "float32",
-        "primary_energy_consumption": "float32",
-    }
-
-    units = {
-        "population": 1e6,  # Population in Million
-        "gdp": 1e9,  # GDP in billion  $ (international 2011)
-        "co2": 1,  # CO2 Mt
-        "primary_energy_consumption": 277.8,
-    }  # Primary energy in Ej from TWh
-
-    df = pd.read_csv(
-        filename, index_col=[0, 1], usecols=coltypes.keys(), dtype=coltypes
-    ).div(pd.Series(units))
-
-    todrop = [
+NOTCOUNTRY = [
         "World",
         "Africa",
         "Africa (GCP)",
@@ -92,7 +69,40 @@ def _get_dataframe(filename):
         "Upper-middle-income countries",
     ]
 
-    df = df[~df.index.get_level_values("country").isin(todrop)]
+
+def _get_dataframe(filename):
+    # Note: We would prefer to use nullable integers than floats but Pandas 1.x has only NaN floats.
+    coltypes = {
+        "country": "category",
+        "year": "int",
+        "population": "float32",
+        "gdp": "float32",
+        "co2": "float32",
+        "primary_energy_consumption": "float32",
+    }
+
+    units = {
+        "population": 1e6,  # Population in Million
+        "gdp": 1e9,  # GDP in billion  $ (international 2011)
+        "co2": 1,  # CO2 Mt
+        "primary_energy_consumption": 277.8,
+    }  # Primary energy in Ej from TWh
+
+    df = pd.read_csv(
+        filename, index_col=[0, 1], usecols=coltypes.keys(), dtype=coltypes
+    ).div(pd.Series(units))
+
+    df = df[~df.index.get_level_values("country").isin(NOTCOUNTRY)]
+
+    df = df.reset_index()
+    
+    cut_years = pd.read_csv("cut_years.csv", index_col=0)
+    cut_years = cut_years[cut_years.columns[0]]
+
+    for country, cut_year in cut_years.items():
+        df = df[~((df['country'] == country) & (df['year'] <= cut_year))]
+
+    df = df.set_index(['country', 'year'])
 
     return df
 
