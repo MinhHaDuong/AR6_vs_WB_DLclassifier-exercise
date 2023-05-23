@@ -1,5 +1,5 @@
 """
-Access the Our World In Data (OWID) as a dataframe.
+Access the Our World In Data (OWID) dataframe, return a list of arrays
 
 See OWID data pipeline https://docs.owid.io/projects/etl/en/latest/api/python/
 

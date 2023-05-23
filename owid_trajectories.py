@@ -19,7 +19,7 @@ import pandas as pd
 # Got it at  https://github.com/owid/co2-data/blob/master/owid-co2-data.csv
 # Units at https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv
 FILENAME_RAW = "owid-co2-data.csv"
-FIlENAME_CLEAN = "owid_trajectories.pkl"
+FILENAME_CLEAN = "owid_trajectories.pkl"
 
 NOTCOUNTRY = [
         "World",
@@ -145,15 +145,15 @@ def _shake(df):
 # %%
 
 try:
-    df_trajectories = pd.read_pickle(FIlENAME_CLEAN)
-    print("Successfully read OWID trajectories from file", FIlENAME_CLEAN)
+    df_trajectories = pd.read_pickle(FILENAME_CLEAN)
+    print("Successfully read OWID trajectories from file", FILENAME_CLEAN)
 except (IOError, EOFError, pickle.UnpicklingError) as e_read:
     print(
-        "Unable to access ", FIlENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
+        "Unable to access ", FILENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
     )
     try:
         df_trajectories = _shake(_get_dataframe(FILENAME_RAW))
-        df_trajectories.to_pickle(FIlENAME_CLEAN)
+        df_trajectories.to_pickle(FILENAME_CLEAN)
         print("Cleaned OWID trajectories saved successfully!")
     except Exception as e:
         print("An error occurred while saving the OWID trajectories:", e)
