@@ -8,6 +8,7 @@ Created on Thu Apr 28 2023
 import pandas as pd
 import numpy as np
 from ar6_trajectories import df_trajectories
+
 # from ar6_sequences import df_sequences
 
 # %% Keep only the rows describing the indicators
@@ -60,6 +61,7 @@ def get_simulations(indicators, units=1):
         ]
     )
     return result
+
 
 # %% New code, the df_sequence
 

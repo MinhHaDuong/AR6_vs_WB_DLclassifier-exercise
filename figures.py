@@ -50,7 +50,7 @@ def compare_data(axs, var="pop", as_change=None, xlabel=None):
             ax.set_ylabel("Change from previous period")
         else:
             ax.set_ylabel("Fraction of world 1990")
-            
+
         ax.set_title(titles[idx])
         ax.set_xticks(x.astype(int))
 
@@ -90,30 +90,43 @@ def compute_data(var):
     data_sim_change = data_change[0:num_sim][::5, :]
     data_obs_change = data_change[num_sim:][::3, :]
 
+    df_obs = pd.DataFrame(
+        {
+            "levels_mean": data_obs.mean(axis=1),
+            "levels_std": data_obs.std(axis=1),
+            "change_mean": data_obs_change.mean(axis=1),
+            "change_std": data_obs_change.std(axis=1),
+        }
+    )
 
-    df_obs = pd.DataFrame({
-        'levels_mean': data_obs.mean(axis=1),
-        'levels_std': data_obs.std(axis=1),
-        'change_mean': data_obs_change.mean(axis=1),
-        'change_std': data_obs_change.std(axis=1)
-    })
-
-    df_sim = pd.DataFrame({
-        'levels_mean': data_sim.mean(axis=1),
-        'levels_std': data_sim.std(axis=1),
-        'change_mean': data_sim_change.mean(axis=1),
-        'change_std': data_sim_change.std(axis=1)
-    })
+    df_sim = pd.DataFrame(
+        {
+            "levels_mean": data_sim.mean(axis=1),
+            "levels_std": data_sim.std(axis=1),
+            "change_mean": data_sim_change.mean(axis=1),
+            "change_std": data_sim_change.std(axis=1),
+        }
+    )
 
     return df_obs, df_sim
 
 
 def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
     # Plot mean versus standard deviation for observations and simulations
-    ax.scatter(data_obs[x_label], data_obs[y_label], color='blue', alpha=0.3,
-               label=var + ' observations')
-    ax.scatter(data_sim[x_label], data_sim[y_label], color='red', alpha=0.1,
-               label=var + ' simulations')
+    ax.scatter(
+        data_obs[x_label],
+        data_obs[y_label],
+        color="blue",
+        alpha=0.3,
+        label=var + " observations",
+    )
+    ax.scatter(
+        data_sim[x_label],
+        data_sim[y_label],
+        color="red",
+        alpha=0.1,
+        label=var + " simulations",
+    )
 
     ax.set_xlabel(x_label.capitalize())
     ax.set_ylabel(y_label.capitalize())
@@ -126,12 +139,12 @@ def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
 def clouds(axs, var):
     df_obs, df_sim = compute_data(var)
 
-    plot_data(axs[0], df_obs, df_sim, var, 'levels_mean', 'levels_std')
-    plot_data(axs[1], df_obs, df_sim, var, 'levels_mean', 'change_mean', hline=True)
-    plot_data(axs[2], df_obs, df_sim, var, 'levels_mean', 'change_std')
-    plot_data(axs[3], df_obs, df_sim, var, 'levels_std', 'change_mean', hline=True)
-    plot_data(axs[4], df_obs, df_sim, var, 'levels_std', 'change_std')
-    plot_data(axs[5], df_obs, df_sim, var, 'change_std', 'change_mean', hline=True)
+    plot_data(axs[0], df_obs, df_sim, var, "levels_mean", "levels_std")
+    plot_data(axs[1], df_obs, df_sim, var, "levels_mean", "change_mean", hline=True)
+    plot_data(axs[2], df_obs, df_sim, var, "levels_mean", "change_std")
+    plot_data(axs[3], df_obs, df_sim, var, "levels_std", "change_mean", hline=True)
+    plot_data(axs[4], df_obs, df_sim, var, "levels_std", "change_std")
+    plot_data(axs[5], df_obs, df_sim, var, "change_std", "change_mean", hline=True)
 
 
 def fig_scatter(filename=None):
@@ -145,5 +158,6 @@ def fig_scatter(filename=None):
         plt.savefig(filename)
     else:
         plt.show()
+
 
 fig_scatter("fig3_multiple.png")

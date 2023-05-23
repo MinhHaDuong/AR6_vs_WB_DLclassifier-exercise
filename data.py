@@ -13,14 +13,17 @@ from observations import get_observations
 
 
 # Source ourworldindata.org
-world_1990 = pd.Series({
-        "co2": 27630,   # Mt CO2/yr
-        "gdp": 35850,   # billion US$2010/yr
-        "pop": 5320,    # million people
+world_1990 = pd.Series(
+    {
+        "co2": 27630,  # Mt CO2/yr
+        "gdp": 35850,  # billion US$2010/yr
+        "pop": 5320,  # million people
         "tpec": 343.9,  # EJ/yr, 95527 TWh
-    })
+    }
+)
 
 all_vars = world_1990.index
+
 
 def _as_change(arrays):
     """Convert a vector of levels into a vector of initial level and factors."""
@@ -44,7 +47,9 @@ def get_data(var=None, as_change=None):
     simulations = get_simulations(var, units=world_1990)
     observations = get_observations(var, units=world_1990)
 
-    print(f"{var}    {len(simulations)} simulations, {len(observations)} observation sequences")
+    print(
+        f"{var}    {len(simulations)} simulations, {len(observations)} observation sequences"
+    )
 
     labels = np.concatenate([np.zeros(len(simulations)), np.ones(len(observations))])
 

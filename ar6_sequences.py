@@ -25,25 +25,33 @@ def _get_values_forward(group):
     group["Value_Y+10"] = group["Value"].reindex(group.index + 10).values
     group["Value_Y+15"] = group["Value"].reindex(group.index + 15).values
     group["Value_Y+20"] = group["Value"].reindex(group.index + 20).values
-    group["Value_Y+25"] = group["Value"].reindex(group.index + 25).values            
+    group["Value_Y+25"] = group["Value"].reindex(group.index + 25).values
     return group
 
 
 def _shake(df):
     # Melt the dataframe from wide to long format
-    result = df.reset_index().melt(
-        id_vars=["Model", "Scenario", "Region", "Variable"],
-        value_vars=df.columns,
-        var_name="Year",
-        value_name="Value",
-    ).dropna()
-  
+    result = (
+        df.reset_index()
+        .melt(
+            id_vars=["Model", "Scenario", "Region", "Variable"],
+            value_vars=df.columns,
+            var_name="Year",
+            value_name="Value",
+        )
+        .dropna()
+    )
+
     result["Year"] = result["Year"].astype(int)
     result.set_index(["Model", "Scenario", "Region", "Variable", "Year"], inplace=True)
 
     # Create the trajectories
-    result = result.groupby(["Model", "Scenario", "Region", "Variable"]).apply(_get_values_forward)
-    result = result.reorder_levels(["Model", "Scenario", "Region", "Year", "Variable"]).sort_index()
+    result = result.groupby(["Model", "Scenario", "Region", "Variable"]).apply(
+        _get_values_forward
+    )
+    result = result.reorder_levels(
+        ["Model", "Scenario", "Region", "Year", "Variable"]
+    ).sort_index()
 
     # Cleanup trajectories with NaNs and zeros
     result = result.dropna()
@@ -51,11 +59,14 @@ def _shake(df):
 
     return result
 
+
 # Development
 
-df = df_trajectories[df_trajectories.index.get_level_values("Variable").isin(indicators)]
+df = df_trajectories[
+    df_trajectories.index.get_level_values("Variable").isin(indicators)
+]
 df = df.drop(columns=["Unit"])
-df = df.head(100)   # For development
+df = df.head(100)  # For development
 
 df3 = _shake(df)
 
@@ -69,9 +80,11 @@ except (IOError, EOFError, pickle.UnpicklingError) as e_read:
         "Unable to access ", FILENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
     )
     try:
-        df = df_trajectories[df_trajectories.index.get_level_values("Variable").isin(indicators)]
+        df = df_trajectories[
+            df_trajectories.index.get_level_values("Variable").isin(indicators)
+        ]
         df = df.drop(columns=["Unit"])
-        
+
         df_sequences = _shake(df)
         df_sequences.to_pickle(FILENAME_CLEAN)
         print("Cleaned OWID trajectories saved successfully!")

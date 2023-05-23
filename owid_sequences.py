@@ -22,52 +22,52 @@ FILENAME_RAW = "owid-co2-data.csv"
 FILENAME_CLEAN = "owid_sequences.pkl"
 
 NOTCOUNTRY = [
-        "World",
-        "Africa",
-        "Africa (GCP)",
-        "Asia",
-        "Asia (GCP)",
-        "Asia (excl. China and India)",
-        "Central America (GCP)",
-        "Europe",
-        "Europe (GCP)",
-        "Europe (excl. EU-27)",
-        "Europe (excl. EU-28)",
-        "European Union (27)",
-        "European Union (27) (GCP)",
-        "European Union (28)",
-        "French Equatorial Africa (GCP)",
-        "French Equatorial Africa (Jones et al. 2023)",
-        "French West Africa (GCP)",
-        "French West Africa (Jones et al. 2023)",
-        "International transport",
-        "High-income countries",
-        "Kuwaiti Oil Fires (GCP)",
-        "Kuwaiti Oil Fires (Jones et al. 2023)",
-        "Least developed countries (Jones et al. 2023)",
-        "Leeward Islands (GCP)",
-        "Leeward Islands (Jones et al. 2023)",
-        "Low-income countries",
-        "Lower-middle-income countries",
-        "Middle East (GCP)",
-        "Non-OECD (GCP)",
-        "North America",
-        "North America (GCP)",
-        "North America (excl. USA)",
-        "OECD (GCP)",
-        "OECD (Jones et al. 2023)",
-        "Oceania",
-        "Oceania (GCP)",
-        "Panama Canal Zone (GCP)",
-        "Panama Canal Zone (Jones et al. 2023)",
-        "Ryukyu Islands (GCP)",
-        "Ryukyu Islands (Jones et al. 2023)",
-        "South America",
-        "South America (GCP)",
-        "St. Kitts-Nevis-Anguilla (GCP)",
-        "St. Kitts-Nevis-Anguilla (Jones et al. 2023)",
-        "Upper-middle-income countries",
-    ]
+    "World",
+    "Africa",
+    "Africa (GCP)",
+    "Asia",
+    "Asia (GCP)",
+    "Asia (excl. China and India)",
+    "Central America (GCP)",
+    "Europe",
+    "Europe (GCP)",
+    "Europe (excl. EU-27)",
+    "Europe (excl. EU-28)",
+    "European Union (27)",
+    "European Union (27) (GCP)",
+    "European Union (28)",
+    "French Equatorial Africa (GCP)",
+    "French Equatorial Africa (Jones et al. 2023)",
+    "French West Africa (GCP)",
+    "French West Africa (Jones et al. 2023)",
+    "International transport",
+    "High-income countries",
+    "Kuwaiti Oil Fires (GCP)",
+    "Kuwaiti Oil Fires (Jones et al. 2023)",
+    "Least developed countries (Jones et al. 2023)",
+    "Leeward Islands (GCP)",
+    "Leeward Islands (Jones et al. 2023)",
+    "Low-income countries",
+    "Lower-middle-income countries",
+    "Middle East (GCP)",
+    "Non-OECD (GCP)",
+    "North America",
+    "North America (GCP)",
+    "North America (excl. USA)",
+    "OECD (GCP)",
+    "OECD (Jones et al. 2023)",
+    "Oceania",
+    "Oceania (GCP)",
+    "Panama Canal Zone (GCP)",
+    "Panama Canal Zone (Jones et al. 2023)",
+    "Ryukyu Islands (GCP)",
+    "Ryukyu Islands (Jones et al. 2023)",
+    "South America",
+    "South America (GCP)",
+    "St. Kitts-Nevis-Anguilla (GCP)",
+    "St. Kitts-Nevis-Anguilla (Jones et al. 2023)",
+    "Upper-middle-income countries",
+]
 
 
 def _get_dataframe(filename):
@@ -82,39 +82,37 @@ def _get_dataframe(filename):
     }
 
     df = pd.read_csv(
-        filename,
-        index_col=[0, 1],
-        usecols=coltypes.keys(),
-        dtype=coltypes
-        )
+        filename, index_col=[0, 1], usecols=coltypes.keys(), dtype=coltypes
+    )
 
-    df = df.rename(columns={
-        "population": "pop",
-        "gdp": "gdp", 
-        "co2": "co2",
-        "primary_energy_consumption": "tpec"})
-    
+    df = df.rename(
+        columns={
+            "population": "pop",
+            "gdp": "gdp",
+            "co2": "co2",
+            "primary_energy_consumption": "tpec",
+        }
+    )
+
     units = {
         "pop": 1e6,  # Population in Million
         "gdp": 1e9,  # GDP in billion  $ (international 2011)
         "co2": 1,  # CO2 Mt
         "tpec": 277.8,
     }  # Primary energy in Ej from TWh
-    
+
     df = df.div(pd.Series(units))
-
     df = df[~df.index.get_level_values("country").isin(NOTCOUNTRY)]
-
     df = df.reset_index()
-    
+
     cut_years = pd.read_csv("cut_years.csv", index_col=0)
     cut_years = cut_years[cut_years.columns[0]]
 
     for country, cut_year in cut_years.items():
-        df = df[~((df['country'] == country) & (df['year'] <= cut_year))]
+        df = df[~((df["country"] == country) & (df["year"] <= cut_year))]
 
-    df = df.reset_index().set_index(['country', 'year'])
-    
+    df = df.reset_index().set_index(["country", "year"])
+
     return df
 
 

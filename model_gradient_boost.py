@@ -73,4 +73,3 @@ best_model = random_search.best_estimator_
 print(best_model)
 print("Best parameters: ", random_search.best_params_)
 print("Best cross-validation score: ", random_search.best_score_)
-
