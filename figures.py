@@ -43,7 +43,6 @@ def compare_data(axs, var="pop", as_change=None, xlabel=None):
             ax.set_ylim(0.5, 2)
             ax.axhline(1, color="black", linewidth=ax.spines["top"].get_linewidth())
 
-        # Set labels
         if xlabel:
             ax.set_xlabel("5 years period")
         if as_change:
