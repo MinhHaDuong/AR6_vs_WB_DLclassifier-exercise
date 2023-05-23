@@ -13,9 +13,13 @@ from ar6_trajectories import df_trajectories
 
 FILENAME_CLEAN = "ar6_sequences.pkl"
 
-# %% Subsample the dataframe, too slow otherwise
-
-indicators = ["co2", "gdp", "pop", "tpec"]
+var_map = {
+    "Population": "pop",
+    "GDP|MER": "gdp",
+    "Emissions|CO2": "co2",
+    "Primary Energy": "tpec",
+}
+indicators = list(var_map.keys())
 
 
 def _get_values_forward(group):
@@ -57,6 +61,8 @@ def _shake(df):
     result = result.dropna()
     result = result[(result != 0).all(axis=1)]
 
+    result = result.rename(index=var_map)
+
     return result
 
 
@@ -76,9 +82,8 @@ try:
     df_sequences = pd.read_pickle(FILENAME_CLEAN)
     print("Successfully read AR6 sequences from file", FILENAME_CLEAN)
 except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-    print(
-        "Unable to access ", FILENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
-    )
+    print("Unable to access ", FILENAME_CLEAN, ":", e_read, ".")
+    print("Attempting to create it.")
     try:
         df = df_trajectories[
             df_trajectories.index.get_level_values("Variable").isin(indicators)
