@@ -1,13 +1,13 @@
 """
 Read the Our World In Data (OWID) CO2 dataset.
-Select variables, change units, build 25-year trajectories with 5 year timestep
+Select variables, change units, build 25-year sequences with 5 year timestep
 Expose as a Pandas DataFrame with multindex [country, variable, year]
 and columns [value, value_Y+5, ..., value_Y+25]
 Cache the result in a .pkl file
 
 See OWID data pipeline https://docs.owid.io/projects/etl/en/latest/api/python/
 
-Usage: from owid_trajectories import df_trajectories
+Usage: from owid_sequences import df_sequences
 
 Created on Thu Apr 20 15:03:33 2023
 @author: haduong@centre-cired.fr
@@ -19,7 +19,7 @@ import pandas as pd
 # Got it at  https://github.com/owid/co2-data/blob/master/owid-co2-data.csv
 # Units at https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv
 FILENAME_RAW = "owid-co2-data.csv"
-FILENAME_CLEAN = "owid_trajectories.pkl"
+FILENAME_CLEAN = "owid_sequences.pkl"
 
 NOTCOUNTRY = [
         "World",
@@ -145,15 +145,15 @@ def _shake(df):
 # %%
 
 try:
-    df_trajectories = pd.read_pickle(FILENAME_CLEAN)
+    df_sequences = pd.read_pickle(FILENAME_CLEAN)
     print("Successfully read OWID trajectories from file", FILENAME_CLEAN)
 except (IOError, EOFError, pickle.UnpicklingError) as e_read:
     print(
         "Unable to access ", FILENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
     )
     try:
-        df_trajectories = _shake(_get_dataframe(FILENAME_RAW))
-        df_trajectories.to_pickle(FILENAME_CLEAN)
+        df_sequences = _shake(_get_dataframe(FILENAME_RAW))
+        df_sequences.to_pickle(FILENAME_CLEAN)
         print("Cleaned OWID trajectories saved successfully!")
     except Exception as e:
         print("An error occurred while saving the OWID trajectories:", e)

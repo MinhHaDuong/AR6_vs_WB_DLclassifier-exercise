@@ -12,23 +12,23 @@ import pandas as pd
 # and disregard data before
 
 # To generate the dirty data you have to 
-#  comment out the cleaning code in owid_trajectories.py
-#  delete the (clean) file owid_trajectories.pkl
-#  run owid_trajectories.py to regenerate it
-#  rename the new file owid_trajectories.pkl as owid_trajectories-withoutliers.pkl
+#  comment out the cleaning code in owid_sequences.py
+#  delete the (clean) file owid_sequences.pkl
+#  run owid_sequences.py to regenerate it
+#  rename the new file owid_sequences.pkl as owid_sequences-withoutliers.pkl
 #  uncomment the cleaning code and regenerate as needed
-df_trajectories = pd.read_pickle("owid_trajectories-withoutliers.pkl")
+df_sequences = pd.read_pickle("owid_sequences-withoutliers.pkl")
 
 # Calculate the ratio of consecutive numbers
-df_trajectories['ratio_Y+5'] = df_trajectories['value_Y+5'] / df_trajectories['value']
-df_trajectories['ratio_Y+10'] = df_trajectories['value_Y+10'] / df_trajectories['value_Y+5']
-df_trajectories['ratio_Y+15'] = df_trajectories['value_Y+15'] / df_trajectories['value_Y+10']
-df_trajectories['ratio_Y+20'] = df_trajectories['value_Y+20'] / df_trajectories['value_Y+15']
-df_trajectories['ratio_Y+25'] = df_trajectories['value_Y+25'] / df_trajectories['value_Y+20']
+df_sequences['ratio_Y+5'] = df_sequences['value_Y+5'] / df_sequences['value']
+df_sequences['ratio_Y+10'] = df_sequences['value_Y+10'] / df_sequences['value_Y+5']
+df_sequences['ratio_Y+15'] = df_sequences['value_Y+15'] / df_sequences['value_Y+10']
+df_sequences['ratio_Y+20'] = df_sequences['value_Y+20'] / df_sequences['value_Y+15']
+df_sequences['ratio_Y+25'] = df_sequences['value_Y+25'] / df_sequences['value_Y+20']
 
 ratio_columns = ['ratio_Y+5', 'ratio_Y+10', 'ratio_Y+15', 'ratio_Y+20', 'ratio_Y+25']
 
-outliers_df2 = df_trajectories[(df_trajectories[ratio_columns] > 2).any(axis=1)]
+outliers_df2 = df_sequences[(df_sequences[ratio_columns] > 2).any(axis=1)]
 cut_years = outliers_df2.reset_index().groupby('country')['year'].max().dropna()
 
 cut_years = cut_years.astype(int)
@@ -41,7 +41,7 @@ del cut_years
 cut_years = pd.read_csv("cut_years.csv", index_col=0)
 cut_years = cut_years[cut_years.columns[0]]
 
-df2 = df_trajectories.reset_index()
+df2 = df_sequences.reset_index()
 for country, cut_year in cut_years.items():
     df2 = df2[~((df2['country'] == country) & (df2['year'] <= cut_year))]
 

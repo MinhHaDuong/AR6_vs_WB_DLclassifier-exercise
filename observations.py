@@ -10,7 +10,7 @@ Created on Thu Apr 20 15:03:33 2023
 
 import pandas as pd
 import numpy as np
-from owid_trajectories import df_trajectories
+from owid_sequences import df_sequences
 
 
 def _select(df, indicators):
@@ -45,7 +45,7 @@ def _select(df, indicators):
 
 
 def get_observations(indicators, units=1):
-    subdf = _select(df_trajectories, indicators)
+    subdf = _select(df_sequences, indicators)
     subdf = subdf.div(units, level="variable", axis=0)
 
     result = np.array([a for _, a in subdf.groupby(level=["country", "year"])])
