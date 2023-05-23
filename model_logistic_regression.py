@@ -19,7 +19,7 @@ x_train, x_test, y_train, y_test = get_sets()
 
 # Initialize a Logistic Regression model
 # Note: regularization strength (C) and penalty tuned from cell below
-model = LogisticRegression(solver="liblinear", random_state=42, C=1000, penalty="l1")
+model = LogisticRegression(solver="liblinear", random_state=42, C=100, penalty="l1")
 
 # Train the model
 model.fit(x_train, y_train)
@@ -50,9 +50,9 @@ grid_search = GridSearchCV(model, param_grid, cv=5)
 # Fit it to the data and find the best hyperparameters
 grid_search.fit(x_train, y_train)
 
-# Print the best parameters and the corresponding score
-print("Best parameters: ", grid_search.best_params_)
-print("Best cross-validation score: ", grid_search.best_score_)
-
 # We can also use the best model found by GridSearchCV
 best_model = grid_search.best_estimator_
+
+print(best_model)
+print("Best parameters: ", grid_search.best_params_)
+print("Best cross-validation score: ", grid_search.best_score_)

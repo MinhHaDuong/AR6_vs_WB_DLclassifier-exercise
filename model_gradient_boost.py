@@ -68,9 +68,9 @@ random_search = RandomizedSearchCV(
 # Fit it to the data and find the best hyperparameters
 random_search.fit(x_train, y_train)
 
-# Print the best parameters and the corresponding score
+# We can also use the best model found by RandomizedSearchCV
+best_model = random_search.best_estimator_
+print(best_model)
 print("Best parameters: ", random_search.best_params_)
 print("Best cross-validation score: ", random_search.best_score_)
 
-# We can also use the best model found by RandomizedSearchCV
-best_model = random_search.best_estimator_
