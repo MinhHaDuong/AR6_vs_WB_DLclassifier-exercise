@@ -27,7 +27,7 @@ FILENAME_CLEAN = "ar6_trajectories.pkl"
 # %% Import the data
 
 
-def _get_dataframe(filename):
+def _get_dataframe(filename=FILENAME_RAW):
     coltypes = {
         "Model": "category",
         "Scenario": "category",
@@ -107,24 +107,32 @@ def _clean(df):
         "2005":"2050",
     ] *= 0.001
 
-    # Drop these rows, their error is not obviously 1000x
-    df.drop(
-        df[
-            (
-                df.index.get_level_values("Model").isin(
-                    ["AIM/Enduse India 3.1", "India MARKAL", "MARKAL-India 1.0"]
-                )
-            )
-            & (df.index.get_level_values("Region") == "IND")
-            & (df.index.get_level_values("Variable") == "GDP|MER")
-        ].index,
-        inplace=True,
-    )
+    # Fix rows with 1000x error in tpec units
+    df.loc[
+        (df.index.get_level_values("Model") == "Global TIMES 2.0")
+        & (df.index.get_level_values("Variable") == "Primary Energy"),
+        "2005":"2050",
+    ] *= 0.001
+
+    # Drop rows those error is not obviously fixable
+    targets = [
+        [("AIM/Enduse India 3.1", "IND", "GDP|MER"), ("Model", "Region", "Variable")],
+        [("India MARKAL", "IND", "GDP|MER"), ("Model", "Region", "Variable")],
+        [("MARKAL-India 1.0", "IND", "GDP|MER"), ("Model", "Region", "Variable")],
+        [("EPPA 6", "2CNow_OptTax", "GDP|MER"), ("Model", "Scenario", "Variable")],
+        [("IMACLIM-NLU 1.0", "Emissions|CO2"), ("Model", "Variable")],
+        [("NEMESIS 5.0", "MLT", "Emissions|CO2"), ("Model", "Region", "Variable")],
+    ]
+
+    for key, levels in targets:
+        rows_to_drop = df.xs(key, level=levels, drop_level=False).index
+        df.drop(rows_to_drop, inplace=True)
 
     if _check_units(df):
         print("Alert: At least one Variable using more than one Unit.")
 
     return df
+
 
 def get_trajectories():
     try:
@@ -135,13 +143,14 @@ def get_trajectories():
         print("   Unable to fetch ", FILENAME_CLEAN, ":", e_read, ".")
         print("   Attempting now to create it.")
     try:
-        df_trajectories = _clean(_get_dataframe(FILENAME_RAW))
+        df_trajectories = _clean(_get_dataframe())
         df_trajectories.to_pickle(FILENAME_CLEAN)
         print("   Saved cleaned AR6 trajectories!")
         return df_trajectories
     except Exception as e_write:
         print("   An error occurred while saving the AR6 trajectories:", e_write)
     return None
+
 
 def get_models(df):
     return df.index.get_level_values(0).unique().tolist()
