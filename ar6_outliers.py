@@ -21,14 +21,23 @@ df = df.reset_index()
 world_1990_reset = world_1990.reset_index()
 world_1990_reset.columns = ["Variable", "unit"]
 
-df = pd.merge(df, world_1990_reset, on="Variable", how='left')
+df = pd.merge(df, world_1990_reset, on="Variable", how="left")
 
-columns_to_divide = ['Value', 'Value_Y+5', 'Value_Y+10', 'Value_Y+15', 'Value_Y+20', 'Value_Y+25']
+columns_to_divide = [
+    "Value",
+    "Value_Y+5",
+    "Value_Y+10",
+    "Value_Y+15",
+    "Value_Y+20",
+    "Value_Y+25",
+]
 
 for col in columns_to_divide:
-    df[col] = df[col] / df['unit']
+    df[col] = df[col] / df["unit"]
 
-df = df.set_index(["Model", "Scenario", "Region", "Year", 'Variable'], drop=True)  # Add the other index levels as needed
+df = df.set_index(
+    ["Model", "Scenario", "Region", "Year", "Variable"], drop=True
+)  # Add the other index levels as needed
 
 df.drop(columns="unit", inplace=True)
 
