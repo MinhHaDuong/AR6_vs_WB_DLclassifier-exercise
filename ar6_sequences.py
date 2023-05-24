@@ -70,7 +70,7 @@ def _shake(df):
 
 try:
     df_sequences = pd.read_pickle(FILENAME_CLEAN)
-    print("Successfully read AR6 sequences from file", FILENAME_CLEAN)
+    print("Success read  file", FILENAME_CLEAN)
 except (IOError, EOFError, pickle.UnpicklingError) as e_read:
     print("Unable to access ", FILENAME_CLEAN, ":", e_read, ".")
     print("Attempting to create it.")
