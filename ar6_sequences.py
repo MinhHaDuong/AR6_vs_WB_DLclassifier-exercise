@@ -9,7 +9,7 @@ Created on Tue May 23 12:57:57 2023
 
 import pickle
 import pandas as pd
-from ar6_trajectories import df_trajectories
+from ar6_trajectories import get_trajectories
 
 FILENAME_CLEAN = "ar6_sequences.pkl"
 
@@ -66,16 +66,6 @@ def _shake(df):
     return result
 
 
-# Development
-
-df = df_trajectories[
-    df_trajectories.index.get_level_values("Variable").isin(indicators)
-]
-df = df.drop(columns=["Unit"])
-df = df.head(100)  # For development
-
-df3 = _shake(df)
-
 # %%
 
 try:
@@ -85,6 +75,7 @@ except (IOError, EOFError, pickle.UnpicklingError) as e_read:
     print("Unable to access ", FILENAME_CLEAN, ":", e_read, ".")
     print("Attempting to create it.")
     try:
+        df_trajectories = get_trajectories()
         df = df_trajectories[
             df_trajectories.index.get_level_values("Variable").isin(indicators)
         ]

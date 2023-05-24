@@ -126,21 +126,22 @@ def _clean(df):
 
     return df
 
-
-try:
-    df_trajectories = pd.read_pickle(FILENAME_CLEAN)
-    print("Successfully read cleaned AR6 trajectories from file", FILENAME_CLEAN)
-except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-    print(
-        "Unable to access ", FILENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
-    )
+def get_trajectories():
+    try:
+        df_trajectories = pd.read_pickle(FILENAME_CLEAN)
+        print("   Success read file", FILENAME_CLEAN)
+        return df_trajectories
+    except (IOError, EOFError, pickle.UnpicklingError) as e_read:
+        print("   Unable to fetch ", FILENAME_CLEAN, ":", e_read, ".")
+        print("   Attempting now to create it.")
     try:
         df_trajectories = _clean(_get_dataframe(FILENAME_RAW))
         df_trajectories.to_pickle(FILENAME_CLEAN)
-        print("Saved cleaned AR6 trajectories!")
+        print("   Saved cleaned AR6 trajectories!")
+        return df_trajectories
     except Exception as e_write:
-        print("An error occurred while saving the AR6 trajectories:", e_write)
-
+        print("   An error occurred while saving the AR6 trajectories:", e_write)
+    return None
 
 def get_models(df):
     return df.index.get_level_values(0).unique().tolist()
