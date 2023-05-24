@@ -29,7 +29,7 @@ def _as_change(arrays):
     """Convert a vector of levels into a vector of initial level and factors."""
     rotated = np.roll(arrays, 1, axis=2)
     #    rotated[:, :, 0] = 1
-    return (arrays / rotated)[:, :, 1:]
+    return (arrays - rotated)[:, :, 1:]
 
 
 def sequence2array(df, indicators, units, level_names, group_keys):
@@ -91,6 +91,7 @@ def get_data(var=None, as_change=None):
     labels = np.concatenate([np.zeros(len(simulations)), np.ones(len(observations))])
 
     data = np.concatenate((simulations, observations))
+
     if as_change:
         data = _as_change(data)
     data = data.reshape(data.shape[0], -1)

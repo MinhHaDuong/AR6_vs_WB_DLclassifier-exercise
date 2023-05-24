@@ -40,8 +40,8 @@ def compare_data(axs, var="pop", as_change=None, xlabel=None):
         ax.set_xlim(x.min(), x.max())
         ax.set_ylim(matrix.min(), matrix.max())
         if as_change:
-            ax.set_ylim(0.5, 2)
-            ax.axhline(1, color="black", linewidth=ax.spines["top"].get_linewidth())
+            #            ax.set_ylim(0.5, 2)
+            ax.axhline(0, color="black", linewidth=ax.spines["top"].get_linewidth())
 
         if xlabel:
             ax.set_xlabel("5 years period")
@@ -75,6 +75,30 @@ fig_lines(as_change=True, filename="fig2-changes.png")
 # %%
 
 
+def residuals(data):
+    """
+    Compute the residuals of a numpy array after fitting a line
+    from the first to the last point.
+
+    Parameters
+    ----------
+    data : numpy.ndarray
+        The input data.
+
+    Returns
+    -------
+    numpy.ndarray
+        The residuals after subtracting the fitted line.
+    """
+    x = np.array([0, len(data) - 1])
+    y = np.array([data[0], data[-1]])
+    coefficients = np.polyfit(x, y, 1)
+    line = np.poly1d(coefficients)
+    x_full_range = np.arange(len(data))
+    y_full_range = line(x_full_range)
+    return data - y_full_range
+
+
 def compute_data(var):
     # Compute for as_change=False
     data, labels = get_data([var])
@@ -89,21 +113,24 @@ def compute_data(var):
     data_sim_change = data_change[0:num_sim][::5, :]
     data_obs_change = data_change[num_sim:][::3, :]
 
+    data_sim_residuals = pd.DataFrame(map(residuals, data_sim))
+    data_obs_residuals = pd.DataFrame(map(residuals, data_obs))
+
     df_obs = pd.DataFrame(
         {
-            "levels_mean": data_obs.mean(axis=1),
-            "levels_std": data_obs.std(axis=1),
-            "change_mean": data_obs_change.mean(axis=1),
-            "change_std": data_obs_change.std(axis=1),
+            "sequence location": data_obs.mean(axis=1),
+            "sequence variability": data_obs_residuals.std(axis=1),
+            "sequence trend": data_obs_change.mean(axis=1),
+            "change spread": data_obs_change.std(axis=1),
         }
     )
 
     df_sim = pd.DataFrame(
         {
-            "levels_mean": data_sim.mean(axis=1),
-            "levels_std": data_sim.std(axis=1),
-            "change_mean": data_sim_change.mean(axis=1),
-            "change_std": data_sim_change.std(axis=1),
+            "sequence location": data_sim.mean(axis=1),
+            "sequence variability": data_sim_residuals.std(axis=1),
+            "sequence trend": data_sim_change.mean(axis=1),
+            "change spread": data_sim_change.std(axis=1),
         }
     )
 
@@ -111,14 +138,6 @@ def compute_data(var):
 
 
 def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
-    # Plot mean versus standard deviation for observations and simulations
-    ax.scatter(
-        data_obs[x_label],
-        data_obs[y_label],
-        color="blue",
-        alpha=0.3,
-        label=var + " observations",
-    )
     ax.scatter(
         data_sim[x_label],
         data_sim[y_label],
@@ -126,11 +145,18 @@ def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
         alpha=0.1,
         label=var + " simulations",
     )
+    ax.scatter(
+        data_obs[x_label],
+        data_obs[y_label],
+        color="blue",
+        alpha=0.3,
+        label=var + " observations",
+    )
 
     ax.set_xlabel(x_label.capitalize())
     ax.set_ylabel(y_label.capitalize())
     if hline:
-        ax.axhline(1, color="black", linewidth=ax.spines["top"].get_linewidth())
+        ax.axhline(0, color="black", linewidth=ax.spines["top"].get_linewidth())
 
     ax.legend()
 
@@ -138,12 +164,24 @@ def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
 def clouds(axs, var):
     df_obs, df_sim = compute_data(var)
 
-    plot_data(axs[0], df_obs, df_sim, var, "levels_mean", "levels_std")
-    plot_data(axs[1], df_obs, df_sim, var, "levels_mean", "change_mean", hline=True)
-    plot_data(axs[2], df_obs, df_sim, var, "levels_mean", "change_std")
-    plot_data(axs[3], df_obs, df_sim, var, "levels_std", "change_mean", hline=True)
-    plot_data(axs[4], df_obs, df_sim, var, "levels_std", "change_std")
-    plot_data(axs[5], df_obs, df_sim, var, "change_std", "change_mean", hline=True)
+    plot_data(
+        axs[0], df_obs, df_sim, var, "sequence location", "sequence trend", hline=True
+    )
+    plot_data(axs[1], df_obs, df_sim, var, "sequence location", "sequence variability")
+    plot_data(axs[2], df_obs, df_sim, var, "sequence location", "change spread")
+    plot_data(
+        axs[3],
+        df_obs,
+        df_sim,
+        var,
+        "sequence variability",
+        "sequence trend",
+        hline=True,
+    )
+    plot_data(axs[4], df_obs, df_sim, var, "sequence variability", "change spread")
+    plot_data(
+        axs[5], df_obs, df_sim, var, "change spread", "sequence trend", hline=True
+    )
 
 
 def fig_scatter(filename=None):
