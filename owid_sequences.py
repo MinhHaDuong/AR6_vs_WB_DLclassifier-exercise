@@ -7,7 +7,7 @@ Cache the result in a .pkl file
 
 See OWID data pipeline https://docs.owid.io/projects/etl/en/latest/api/python/
 
-Usage: from owid_sequences import df_sequences
+Usage: from owid_sequences import df_sequences as df_observations
 
 Created on Thu Apr 20 15:03:33 2023
 @author: haduong@centre-cired.fr
@@ -20,57 +20,11 @@ import pandas as pd
 # Units at https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv
 FILENAME_RAW = "owid-co2-data.csv"
 FILENAME_CLEAN = "owid_sequences.pkl"
-
-NOTCOUNTRY = [
-    "World",
-    "Africa",
-    "Africa (GCP)",
-    "Asia",
-    "Asia (GCP)",
-    "Asia (excl. China and India)",
-    "Central America (GCP)",
-    "Europe",
-    "Europe (GCP)",
-    "Europe (excl. EU-27)",
-    "Europe (excl. EU-28)",
-    "European Union (27)",
-    "European Union (27) (GCP)",
-    "European Union (28)",
-    "French Equatorial Africa (GCP)",
-    "French Equatorial Africa (Jones et al. 2023)",
-    "French West Africa (GCP)",
-    "French West Africa (Jones et al. 2023)",
-    "International transport",
-    "High-income countries",
-    "Kuwaiti Oil Fires (GCP)",
-    "Kuwaiti Oil Fires (Jones et al. 2023)",
-    "Least developed countries (Jones et al. 2023)",
-    "Leeward Islands (GCP)",
-    "Leeward Islands (Jones et al. 2023)",
-    "Low-income countries",
-    "Lower-middle-income countries",
-    "Middle East (GCP)",
-    "Non-OECD (GCP)",
-    "North America",
-    "North America (GCP)",
-    "North America (excl. USA)",
-    "OECD (GCP)",
-    "OECD (Jones et al. 2023)",
-    "Oceania",
-    "Oceania (GCP)",
-    "Panama Canal Zone (GCP)",
-    "Panama Canal Zone (Jones et al. 2023)",
-    "Ryukyu Islands (GCP)",
-    "Ryukyu Islands (Jones et al. 2023)",
-    "South America",
-    "South America (GCP)",
-    "St. Kitts-Nevis-Anguilla (GCP)",
-    "St. Kitts-Nevis-Anguilla (Jones et al. 2023)",
-    "Upper-middle-income countries",
-]
+FILENAME_CUTYEARS = "owid_cutyears.csv"
+FILENAME_NOTCOUNTRY = "owid_notcountry.csv"
 
 
-def _get_dataframe(filename):
+def get_dataframe(filename, censored_countrynames=[], cut_years={}):
     # Note: We would prefer to use nullable integers than floats but Pandas 1.x has only NaN floats.
     coltypes = {
         "country": "category",
@@ -102,17 +56,16 @@ def _get_dataframe(filename):
     }  # Primary energy in Ej from TWh
 
     df = df.div(pd.Series(units))
-    df = df[~df.index.get_level_values("country").isin(NOTCOUNTRY)]
-    df = df.reset_index()
 
-    cut_years = pd.read_csv("cut_years.csv", index_col=0)
-    cut_years = cut_years[cut_years.columns[0]]
+    mask = ~df.index.get_level_values("country").isin(censored_countrynames)
 
     for country, cut_year in cut_years.items():
-        df = df[~((df["country"] == country) & (df["year"] <= cut_year))]
+        country_mask = df.index.get_level_values("country") == country
+        year_mask = df.index.get_level_values("year") <= cut_year
+        censored = country_mask & year_mask
+        mask = mask & (~censored)
 
-    df = df.reset_index().set_index(["country", "year"])
-
+    df = df[mask]
     return df
 
 
@@ -130,7 +83,7 @@ def _get_values_forward(group):
     return group
 
 
-def _shake(df):
+def shake(df):
     # Melt the dataframe from wide to long format
     result = df.reset_index().melt(
         id_vars=["country", "year"],
@@ -161,7 +114,12 @@ except (IOError, EOFError, pickle.UnpicklingError) as e_read:
         "Unable to access ", FILENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
     )
     try:
-        df_sequences = _shake(_get_dataframe(FILENAME_RAW))
+        with open(FILENAME_NOTCOUNTRY, "r") as file:
+            not_country = [line.strip() for line in file]
+        cut_years = pd.read_csv(FILENAME_CUTYEARS, index_col=0)
+        cut_years = cut_years[cut_years.columns[0]]
+        df_filtered = get_dataframe(FILENAME_RAW, not_country, cut_years)
+        df_sequences = shake(df_filtered)
         df_sequences.to_pickle(FILENAME_CLEAN)
         print("Cleaned OWID trajectories saved successfully!")
     except Exception as e:

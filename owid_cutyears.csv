@@ -1,5 +1,7 @@
 country,year
 Afghanistan,1996
+Africa,1902
+Africa (GCP),1902
 Albania,1993
 Algeria,1982
 Angola,1996
@@ -7,6 +9,9 @@ Antigua and Barbuda,1983
 Argentina,1949
 Armenia,1943
 Aruba,1996
+Asia,1955
+Asia (GCP),1955
+Asia (excl. China and India),1874
 Australia,1897
 Austria,1946
 Azerbaijan,1993
@@ -35,6 +40,7 @@ Cameroon,1979
 Canada,1879
 Cape Verde,1994
 Central African Republic,1966
+Central America (GCP),1949
 Chad,1994
 Chile,1900
 China,1968
@@ -61,6 +67,9 @@ Equatorial Guinea,1996
 Estonia,1943
 Eswatini,1989
 Ethiopia,1995
+Europe (excl. EU-28),1943
+European Union (27),1945
+European Union (27) (GCP),1945
 Faeroe Islands,1984
 Falkland Islands,1994
 Fiji,1976
@@ -105,6 +114,8 @@ Lesotho,1993
 Liberia,1994
 Libya,1993
 Lithuania,1943
+Low-income countries,1966
+Lower-middle-income countries,1984
 Luxembourg,1949
 Macao,1982
 Madagascar,1962
@@ -116,6 +127,7 @@ Martinique,1985
 Mauritania,1991
 Mauritius,1988
 Mexico,1918
+Middle East (GCP),1961
 Moldova,1943
 Mongolia,1996
 Montenegro,1945
@@ -133,14 +145,20 @@ Nicaragua,1953
 Niger,1994
 Nigeria,1996
 Niue,1994
+Non-OECD (GCP),1877
+North America,1843
+North America (excl. USA),1915
 North Korea,1996
 North Macedonia,1945
 Norway,1945
+Oceania,1897
+Oceania (GCP),1897
 Oman,1986
 Pakistan,1949
 Palau,1968
 Palestine,1992
 Panama,1949
+Panama Canal Zone (GCP),1954
 Papua New Guinea,1970
 Paraguay,1986
 Peru,1932
@@ -173,6 +191,8 @@ Slovenia,1945
 Solomon Islands,1978
 Somalia,1981
 South Africa,1902
+South America,1949
+South America (GCP),1949
 South Korea,1965
 South Sudan,1994
 Spain,1937
@@ -197,6 +217,7 @@ Ukraine,1943
 United Arab Emirates,1994
 United States,1843
 United States Virgin Islands,1994
+Upper-middle-income countries,1873
 Uruguay,1949
 Uzbekistan,1943
 Vanuatu,1996
