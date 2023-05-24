@@ -108,7 +108,7 @@ def shake(df):
 
 try:
     df_sequences = pd.read_pickle(FILENAME_CLEAN)
-    print("Successfully read OWID trajectories from file", FILENAME_CLEAN)
+    print("Successfully read OWID sequences from file", FILENAME_CLEAN)
 except (IOError, EOFError, pickle.UnpicklingError) as e_read:
     print(
         "Unable to access ", FILENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
@@ -121,6 +121,6 @@ except (IOError, EOFError, pickle.UnpicklingError) as e_read:
         df_filtered = get_dataframe(FILENAME_RAW, not_country, cut_years)
         df_sequences = shake(df_filtered)
         df_sequences.to_pickle(FILENAME_CLEAN)
-        print("Cleaned OWID trajectories saved successfully!")
+        print("Cleaned OWID sequences saved successfully!")
     except Exception as e:
         print("An error occurred while saving the OWID trajectories:", e)
