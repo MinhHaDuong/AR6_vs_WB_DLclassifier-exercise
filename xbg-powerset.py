@@ -10,11 +10,11 @@ import datetime
 import itertools
 import pandas as pd
 import xgboost as xgb
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, roc_auc_score
 
-import matplotlib.pyplot as plt
 
 from data import get_data, all_vars
 
@@ -22,7 +22,61 @@ AS_CHANGE = True
 
 # %%
 
-# Define the parameters for the GBM classifier
+
+def train_and_evaluate_model(model, x_train, y_train, x_test, y_test):
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+
+    score = classification_report(y_test, y_pred, output_dict=True)
+    auc_score = roc_auc_score(y_test, y_pred)
+    precision = score["weighted avg"]["precision"]
+    recall = score["weighted avg"]["recall"]
+    accuracy = score["accuracy"]
+
+    # Calculate sample balance
+    num_positives = sum(y_train)
+    num_negatives = len(y_train) - num_positives
+    sample_balance = num_positives / num_negatives
+
+    return score, auc_score, precision, recall, accuracy, sample_balance
+
+
+def train_eval_powerset(model, all_vars, as_change):
+    result = pd.DataFrame(
+        columns=["AUC", "F1", "Precision", "Recall", "Accuracy", "Sample Balance"]
+    )
+    result.index.name = "Variables"
+
+    for r in range(1, len(all_vars) + 1):
+        for subset in itertools.combinations(all_vars, r):
+            data, labels = get_data(subset, as_change=as_change)
+            x_train, x_test, y_train, y_test = train_test_split(
+                data, labels, test_size=0.2, random_state=42
+            )
+
+            # Use our new function here
+            (
+                score,
+                auc_score,
+                precision,
+                recall,
+                accuracy,
+                sample_balance,
+            ) = train_and_evaluate_model(model, x_train, y_train, x_test, y_test)
+            result.loc[str(subset)] = [
+                auc_score,
+                score["weighted avg"]["f1-score"],
+                precision,
+                recall,
+                accuracy,
+                sample_balance,
+            ]
+
+    return result
+
+
+# %% Define the GBM classifier
+
 params = {
     "objective": "binary:logistic",
     "eval_metric": "logloss",
@@ -34,31 +88,11 @@ params = {
     "n_estimators": 360,
 }
 
-# Initialize the GBM classifier
 model = xgb.XGBClassifier(**params)
 
 # %%
 
-result = pd.DataFrame(columns=["AUC", "F1"])
-result.index.name = "Variables"
-
-for r in range(1, len(all_vars) + 1):
-    for subset in itertools.combinations(all_vars, r):
-        data, labels = get_data(subset, as_change=AS_CHANGE)
-        x_train, x_test, y_train, y_test = train_test_split(
-            data, labels, test_size=0.2, random_state=42
-        )
-        model.fit(x_train, y_train)
-        y_pred = model.predict(x_test)
-        score = classification_report(y_test, y_pred, output_dict=True)
-        score["AUC-score"] = roc_auc_score(y_test, y_pred)
-        result.loc[str(subset)] = [
-            score["AUC-score"],
-            score["weighted avg"]["f1-score"],
-        ]
-        print(result, "\n")
-
-# %%
+result = train_eval_powerset(model, all_vars, AS_CHANGE)
 
 result.reset_index(level=0, inplace=True)
 result["Variables"] = result["Variables"].str.replace(",)", ")")
@@ -85,17 +119,16 @@ We pool all the model, regions, years into two big sets of sequences,
 and trained a GBM classifier to distinguish simulations from observations.
 
 Results shows that
-- Simulations are very distinguishable from observations when looking at levels.
-- Simulations are less distinguishable from observations when looking at changes.
-- Trajectories with the 'population' variable are more distinguishable that those without
+- Simulations are quite distinguishable from observations, even when looking at series in difference.
+- Sequences with the 'tpec' variable are less distinguishable.
+- Sequences with the 'population' variable are more distinguishable.
+-> Simulations are realistic for energy, but the demographic dynamics is questionable.
+
 
 {result}
 
 Sorted by F1
 {result_byF1.to_string()}
-
-Sorted by AUC
-{result_byAUC.to_string()}
 """
 
 print(message)
@@ -160,7 +193,7 @@ def graph(score_name):
         false_values = result[score_name].xs(False, level=variable)
         values = [true_values, false_values]
 
-        ax.boxplot(values, labels=["In", "·Out"], positions=[1, 2])
+        ax.boxplot(values, labels=["In", "Out"], positions=[1, 2])
         # Add individual data points
         for i, value in enumerate(values, start=1):
             y = value
@@ -169,8 +202,9 @@ def graph(score_name):
 
         ax.set_ylim(y0, 1)
         ax.set_title(f"{variable}")
-        ax.set_ylabel(score)
+        ax.set_ylabel(score_name)
 
+    plt.suptitle(f"Classifier score {score_name} with or without variables")
     plt.tight_layout()
     plt.savefig(f"single_variable_{score_name}.png")
     plt.show()
