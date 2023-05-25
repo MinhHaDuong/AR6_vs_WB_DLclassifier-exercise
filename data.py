@@ -25,11 +25,16 @@ world_1990 = pd.Series(
 all_vars = world_1990.index
 
 
-def _as_change(arrays):
-    """Convert a vector of levels into a vector of initial level and factors."""
+def dif(arrays):
+    """Return the first difference of each array in the list.
+
+    Drop rather than insert NaN, so returned arrays will be one column narrower."""
     rotated = np.roll(arrays, 1, axis=2)
-    #    rotated[:, :, 0] = 1
     return (arrays - rotated)[:, :, 1:]
+
+
+def flat(array):
+    return array.reshape(array.shape[0], -1)
 
 
 def sequence2array(df, indicators, units, level_names, group_keys):
@@ -61,7 +66,7 @@ def sequence2array(df, indicators, units, level_names, group_keys):
     return result
 
 
-def get_data(var=None, as_change=None):
+def get_data(var=None, as_change=None, flatten=True):
     """
     Combine simulations and observations.
 
@@ -93,8 +98,10 @@ def get_data(var=None, as_change=None):
     data = np.concatenate((simulations, observations))
 
     if as_change:
-        data = _as_change(data)
-    data = data.reshape(data.shape[0], -1)
+        data = dif(data)
+
+    if flatten:
+        data = flat(data)
 
     return data, labels
 
