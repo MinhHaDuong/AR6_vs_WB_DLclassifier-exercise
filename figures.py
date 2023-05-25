@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
+from mpl_toolkits.mplot3d import Axes3D
+
 from data import get_data
 
 # %% Verify the data: well normalized, no outliers, ...
@@ -118,19 +120,17 @@ def compute_data(var):
 
     df_obs = pd.DataFrame(
         {
-            "sequence location": data_obs.mean(axis=1),
-            "sequence variability": data_obs_residuals.std(axis=1),
-            "sequence trend": data_obs_change.mean(axis=1),
-            "change spread": data_obs_change.std(axis=1),
+            "location": data_obs.mean(axis=1),
+            "variability": data_obs_residuals.std(axis=1),
+            "trend": data_obs_change.mean(axis=1),
         }
     )
 
     df_sim = pd.DataFrame(
         {
-            "sequence location": data_sim.mean(axis=1),
-            "sequence variability": data_sim_residuals.std(axis=1),
-            "sequence trend": data_sim_change.mean(axis=1),
-            "change spread": data_sim_change.std(axis=1),
+            "location": data_sim.mean(axis=1),
+            "variability": data_sim_residuals.std(axis=1),
+            "trend": data_sim_change.mean(axis=1),
         }
     )
 
@@ -152,7 +152,6 @@ def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
         alpha=0.3,
         label=var + " observations",
     )
-
     ax.set_xlabel(x_label.capitalize())
     ax.set_ylabel(y_label.capitalize())
     if hline:
@@ -163,29 +162,13 @@ def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
 
 def clouds(axs, var):
     df_obs, df_sim = compute_data(var)
-
-    plot_data(
-        axs[0], df_obs, df_sim, var, "sequence location", "sequence trend", hline=True
-    )
-    plot_data(axs[1], df_obs, df_sim, var, "sequence location", "sequence variability")
-    plot_data(axs[2], df_obs, df_sim, var, "sequence location", "change spread")
-    plot_data(
-        axs[3],
-        df_obs,
-        df_sim,
-        var,
-        "sequence variability",
-        "sequence trend",
-        hline=True,
-    )
-    plot_data(axs[4], df_obs, df_sim, var, "sequence variability", "change spread")
-    plot_data(
-        axs[5], df_obs, df_sim, var, "change spread", "sequence trend", hline=True
-    )
+    plot_data(axs[0], df_obs, df_sim, var, "location", "trend", hline=True)
+    plot_data(axs[1], df_obs, df_sim, var, "location", "variability")
+    plot_data(axs[2], df_obs, df_sim, var, "variability", "trend", hline=True)
 
 
 def fig_scatter(filename=None):
-    fig, axs = plt.subplots(4, 6, figsize=(36, 16))
+    fig, axs = plt.subplots(4, 3, figsize=(18, 16))
     clouds(axs[0, :], "co2")
     clouds(axs[1, :], "pop")
     clouds(axs[2, :], "gdp")
@@ -197,4 +180,52 @@ def fig_scatter(filename=None):
         plt.show()
 
 
-fig_scatter("fig3_multiple.png")
+fig_scatter("fig3_2D.png")
+
+
+# %%
+
+
+def cloud3d(ax, df_obs, df_sim, var, azimut):
+    ax.scatter(
+        df_sim["location"],
+        df_sim["trend"],
+        df_sim["variability"],
+        color="red",
+        alpha=0.05,
+    )
+    ax.scatter(
+        df_obs["location"],
+        df_obs["trend"],
+        df_obs["variability"],
+        color="blue",
+        alpha=0.3,
+    )
+    ax.set_xlabel("location")
+    ax.set_ylabel("trend")
+    ax.set_zlabel("variability")
+    ax.view_init(elev=30, azim=azimut)
+    ax.set_title(f"{var}")
+
+
+def fig_scatter3d(azimuths, filename=None):
+    fig = plt.figure(
+        figsize=(3 * len(azimuths), 16)
+    )  # Adjust width according to number of azimuths
+    variables = ["co2", "pop", "gdp", "tpec"]
+    for i, var in enumerate(variables):
+        df_obs, df_sim = compute_data(var)  # Compute data once per variable
+        for j, azim in enumerate(azimuths):
+            ax = fig.add_subplot(
+                4, len(azimuths), i * len(azimuths) + j + 1, projection="3d"
+            )
+            cloud3d(ax, df_obs, df_sim, var, azimut=azim)
+    if filename:
+        plt.savefig(filename)
+    plt.show()
+
+
+fig_scatter3d([120], "fig3_3D")
+
+# Finetuning
+# fig_scatter3d(range[100, 150, 10])
