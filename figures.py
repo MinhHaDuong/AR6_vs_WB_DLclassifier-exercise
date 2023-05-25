@@ -8,16 +8,34 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from mpl_toolkits.mplot3d import Axes3D
 
-from data import get_data
+from data import get_data, dif, flat, all_vars
 
-# %% Verify the data: well normalized, no outliers, ...
+# Load the data
+
+DATA = {}
+DATA_DIFF = {}
+DATA_DIFF2 = {}
+LABELS = {}
+
+for v in all_vars:
+    data_3d, labels = get_data([v], as_change=False, flatten=False)
+    DATA[v] = flat(data_3d)
+    DATA_DIFF[v] = flat(dif(data_3d))
+    DATA_DIFF2[v] = flat(dif(dif(data_3d)))
+    LABELS[v] = labels
+
+
+# %% Display the sequences
 
 
 def compare_data(axs, var="pop", as_change=None, xlabel=None):
-    data, labels = get_data([var], as_change)
+    if as_change:
+        data = DATA_DIFF[var]
+    else:
+        data = DATA[var]
 
+    labels = LABELS[var]
     num_obs = int(sum(labels))
     num_sim = int(len(labels) - num_obs)
 
@@ -31,7 +49,7 @@ def compare_data(axs, var="pop", as_change=None, xlabel=None):
 
     titles = [var + " observations", var + " simulations"]
     if as_change:
-        titles = [s + " changes" for s in titles]
+        titles = [s + " difference" for s in titles]
 
     for idx, (ax, matrix) in enumerate(zip(axs, [matrix1, matrix2])):
         lines = [list(zip(x, matrix[i, :])) for i in range(matrix.shape[0])]
@@ -48,7 +66,7 @@ def compare_data(axs, var="pop", as_change=None, xlabel=None):
         if xlabel:
             ax.set_xlabel("5 years period")
         if as_change:
-            ax.set_ylabel("Change from previous period")
+            ax.set_ylabel("Difference to next period")
         else:
             ax.set_ylabel("Fraction of world 1990")
 
@@ -74,7 +92,8 @@ def fig_lines(as_change=False, filename=None):
 fig_lines(filename="fig1-levels.png")
 fig_lines(as_change=True, filename="fig2-changes.png")
 
-# %%
+
+# %% Display 2D scatterplots
 
 
 def residuals(data):
@@ -102,18 +121,22 @@ def residuals(data):
 
 
 def compute_data(var):
-    # Compute for as_change=False
-    data, labels = get_data([var])
-    data_change, _ = get_data([var], as_change=True)
+    data = DATA[var]
+    data_dif = DATA_DIFF[var]
+    data_dif2 = DATA_DIFF2[var]
+    labels = LABELS[var]
 
     num_obs = int(sum(labels))
     num_sim = int(len(labels) - num_obs)
 
+    # Subsampling one of 5 or 3 sequence
     data_sim = data[0:num_sim][::5, :]
     data_obs = data[num_sim:][::3, :]
 
-    data_sim_change = data_change[0:num_sim][::5, :]
-    data_obs_change = data_change[num_sim:][::3, :]
+    data_sim_dif = data_dif[0:num_sim][::5, :]
+    data_obs_dif = data_dif[num_sim:][::3, :]
+    data_sim_dif2 = data_dif2[0:num_sim][::5, :]
+    data_obs_dif2 = data_dif2[num_sim:][::3, :]
 
     data_sim_residuals = pd.DataFrame(map(residuals, data_sim))
     data_obs_residuals = pd.DataFrame(map(residuals, data_obs))
@@ -122,7 +145,8 @@ def compute_data(var):
         {
             "location": data_obs.mean(axis=1),
             "variability": data_obs_residuals.std(axis=1),
-            "trend": data_obs_change.mean(axis=1),
+            "trend": data_obs_dif.mean(axis=1),
+            "acceleration": data_obs_dif2.mean(axis=1),
         }
     )
 
@@ -130,14 +154,15 @@ def compute_data(var):
         {
             "location": data_sim.mean(axis=1),
             "variability": data_sim_residuals.std(axis=1),
-            "trend": data_sim_change.mean(axis=1),
+            "trend": data_sim_dif.mean(axis=1),
+            "acceleration": data_sim_dif2.mean(axis=1),
         }
     )
 
     return df_obs, df_sim
 
 
-def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
+def plot_data(ax, data_obs, data_sim, var, x_label, y_label, vline=None, hline=None):
     ax.scatter(
         data_sim[x_label],
         data_sim[y_label],
@@ -154,6 +179,8 @@ def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
     )
     ax.set_xlabel(x_label.capitalize())
     ax.set_ylabel(y_label.capitalize())
+    if vline:
+        ax.axvline(0, color="black", linewidth=ax.spines["top"].get_linewidth())
     if hline:
         ax.axhline(0, color="black", linewidth=ax.spines["top"].get_linewidth())
 
@@ -163,8 +190,10 @@ def plot_data(ax, data_obs, data_sim, var, x_label, y_label, hline=None):
 def clouds(axs, var):
     df_obs, df_sim = compute_data(var)
     plot_data(axs[0], df_obs, df_sim, var, "location", "trend", hline=True)
-    plot_data(axs[1], df_obs, df_sim, var, "location", "variability")
-    plot_data(axs[2], df_obs, df_sim, var, "variability", "trend", hline=True)
+    plot_data(
+        axs[1], df_obs, df_sim, var, "trend", "acceleration", vline=True, hline=True
+    )
+    plot_data(axs[2], df_obs, df_sim, var, "location", "variability")
 
 
 def fig_scatter(filename=None):
@@ -183,38 +212,36 @@ def fig_scatter(filename=None):
 fig_scatter("fig3_2D.png")
 
 
-# %%
+# %% Display a 3D scatterplot
 
 
 def cloud3d(ax, df_obs, df_sim, var, azimut):
     ax.scatter(
         df_sim["location"],
         df_sim["trend"],
-        df_sim["variability"],
+        df_sim["acceleration"],
         color="red",
-        alpha=0.05,
+        alpha=0.01,
     )
     ax.scatter(
         df_obs["location"],
         df_obs["trend"],
-        df_obs["variability"],
+        df_obs["acceleration"],
         color="blue",
         alpha=0.3,
     )
     ax.set_xlabel("location")
     ax.set_ylabel("trend")
-    ax.set_zlabel("variability")
+    ax.set_zlabel("acceleration")
     ax.view_init(elev=30, azim=azimut)
     ax.set_title(f"{var}")
 
 
 def fig_scatter3d(azimuths, filename=None):
-    fig = plt.figure(
-        figsize=(3 * len(azimuths), 16)
-    )  # Adjust width according to number of azimuths
+    fig = plt.figure(figsize=(3 * len(azimuths), 16))
     variables = ["co2", "pop", "gdp", "tpec"]
     for i, var in enumerate(variables):
-        df_obs, df_sim = compute_data(var)  # Compute data once per variable
+        df_obs, df_sim = compute_data(var)
         for j, azim in enumerate(azimuths):
             ax = fig.add_subplot(
                 4, len(azimuths), i * len(azimuths) + j + 1, projection="3d"
@@ -225,7 +252,8 @@ def fig_scatter3d(azimuths, filename=None):
     plt.show()
 
 
-fig_scatter3d([120], "fig3_3D")
+fig_scatter3d([100], "fig3_3D")
 
-# Finetuning
-# fig_scatter3d(range[100, 150, 10])
+# %% Finetuning the viewpoint
+
+fig_scatter3d(range(90, 180, 10))
