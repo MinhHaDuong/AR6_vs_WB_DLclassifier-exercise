@@ -20,11 +20,10 @@ import pandas as pd
 # Units at https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv
 FILENAME_RAW = "owid-co2-data.csv"
 FILENAME_CLEAN = "owid_sequences.pkl"
-FILENAME_CUTYEARS = "owid_cutyears.csv"
 FILENAME_NOTCOUNTRY = "owid_notcountry.csv"
 
 
-def get_dataframe(filename, censored_countrynames=[], cut_years={}):
+def get_dataframe(filename, censored_countrynames=[]):
     # Note: We would prefer to use nullable integers than floats but Pandas 1.x has only NaN floats.
     coltypes = {
         "country": "category",
@@ -58,12 +57,6 @@ def get_dataframe(filename, censored_countrynames=[], cut_years={}):
     df = df.div(pd.Series(units))
 
     mask = ~df.index.get_level_values("country").isin(censored_countrynames)
-
-    # for country, cut_year in cut_years.items():
-    #     country_mask = df.index.get_level_values("country") == country
-    #     year_mask = df.index.get_level_values("year") <= cut_year
-    #     censored = country_mask & year_mask
-    #     mask = mask & (~censored)
 
     df = df[mask]
     return df
@@ -116,9 +109,7 @@ except (IOError, EOFError, pickle.UnpicklingError) as e_read:
     try:
         with open(FILENAME_NOTCOUNTRY, "r") as file:
             not_country = [line.strip() for line in file]
-        cut_years = pd.read_csv(FILENAME_CUTYEARS, index_col=0)
-        cut_years = cut_years[cut_years.columns[0]]
-        df_filtered = get_dataframe(FILENAME_RAW, not_country, cut_years)
+        df_filtered = get_dataframe(FILENAME_RAW, not_country)
         df_sequences = shake(df_filtered)
         df_sequences.to_pickle(FILENAME_CLEAN)
         print("Cleaned OWID sequences saved successfully!")
