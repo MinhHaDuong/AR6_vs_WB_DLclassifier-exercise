@@ -114,7 +114,8 @@ def _clean(df):
         "2005":"2050",
     ] *= 0.001
 
-    # Drop rows those error is not obviously fixable
+    # Drop rows those error is not obviously fixable.
+    # Drop EU not a country
     targets = [
         [("AIM/Enduse India 3.1", "IND", "GDP|MER"), ("Model", "Region", "Variable")],
         [("India MARKAL", "IND", "GDP|MER"), ("Model", "Region", "Variable")],
@@ -122,6 +123,7 @@ def _clean(df):
         [("EPPA 6", "2CNow_OptTax", "GDP|MER"), ("Model", "Scenario", "Variable")],
         [("IMACLIM-NLU 1.0", "Emissions|CO2"), ("Model", "Variable")],
         [("NEMESIS 5.0", "MLT", "Emissions|CO2"), ("Model", "Region", "Variable")],
+        [("EU"), ("Region")],
     ]
 
     for key, levels in targets:
