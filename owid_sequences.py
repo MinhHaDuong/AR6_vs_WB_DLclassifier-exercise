@@ -59,11 +59,11 @@ def get_dataframe(filename, censored_countrynames=[], cut_years={}):
 
     mask = ~df.index.get_level_values("country").isin(censored_countrynames)
 
-    for country, cut_year in cut_years.items():
-        country_mask = df.index.get_level_values("country") == country
-        year_mask = df.index.get_level_values("year") <= cut_year
-        censored = country_mask & year_mask
-        mask = mask & (~censored)
+    # for country, cut_year in cut_years.items():
+    #     country_mask = df.index.get_level_values("country") == country
+    #     year_mask = df.index.get_level_values("year") <= cut_year
+    #     censored = country_mask & year_mask
+    #     mask = mask & (~censored)
 
     df = df[mask]
     return df
