@@ -256,4 +256,4 @@ fig_scatter3d([100], "fig3_3D")
 
 # %% Finetuning the viewpoint
 
-fig_scatter3d(range(90, 180, 10))
+# fig_scatter3d(range(90, 180, 10))

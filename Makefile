@@ -1,7 +1,10 @@
 PYTHON=python3
 CLEANDATA=owid_sequences.pkl ar6_sequences.pkl
+PRECIOUS=$(CLEANDATA) ar6_trajectories.pkl
 ANALYSE=fig1-levels.png fig2-changes.png fig3_2D.png fig3_3D.png
 CLASSIFY=single_variable_AUC.png single_variable_F1.png xbg-powerset-changeTrue.txt
+
+.PRECIOUS: $(PRECIOUS)
 
 all: fig1-levels.png xbg-powerset-changeTrue.txt
 
@@ -24,4 +27,4 @@ clean:
 	-rm -f $(ANALYSE) $(CLASSIFY)
 
 cleaner: clean
-	-rm -f $(CLEANDATA) ar6_trajectories.pkl
+	-rm -f $(PRECIOUS)
