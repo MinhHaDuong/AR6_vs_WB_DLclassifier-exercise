@@ -9,6 +9,8 @@ Created on Tue May 23 12:57:57 2023
 
 import pickle
 import pandas as pd
+import multiprocessing as mp  # Breaks Spyder profilers, and hit RAM on T480s 8Gb
+
 from ar6_trajectories import get_trajectories
 
 FILENAME_CLEAN = "ar6_sequences.pkl"
@@ -29,15 +31,15 @@ index_map = {
 
 
 def _get_values_forward(group):
-    group = group.reset_index()
-    group = group.set_index("Year")
-    group = group.drop(columns=["Model", "Scenario", "Region", "Variable"])
-    group["value_Y+5"] = group["value"].reindex(group.index + 5).values
-    group["value_Y+10"] = group["value"].reindex(group.index + 10).values
-    group["value_Y+15"] = group["value"].reindex(group.index + 15).values
-    group["value_Y+20"] = group["value"].reindex(group.index + 20).values
-    group["value_Y+25"] = group["value"].reindex(group.index + 25).values
-    return group
+    key, df = group
+    df = df.reset_index()
+    df.set_index("Year", inplace=True)
+    df["value_Y+5"] = df["value"].reindex(df.index + 5).values
+    df["value_Y+10"] = df["value"].reindex(df.index + 10).values
+    df["value_Y+15"] = df["value"].reindex(df.index + 15).values
+    df["value_Y+20"] = df["value"].reindex(df.index + 20).values
+    df["value_Y+25"] = df["value"].reindex(df.index + 25).values
+    return df
 
 
 def _shake(df):
@@ -56,12 +58,14 @@ def _shake(df):
     result["Year"] = result["Year"].astype("int16")
     result.set_index(["Model", "Scenario", "Region", "Variable", "Year"], inplace=True)
 
-    # Create the trajectories
-    result = result.groupby(["Model", "Scenario", "Region", "Variable"]).apply(
-        _get_values_forward
-    )
-    result = result.reorder_levels(["Model", "Scenario", "Region", "Year", "Variable"])
+    with mp.Pool(mp.cpu_count()) as pool:
+        group_data = list(result.groupby(["Model", "Scenario", "Region", "Variable"]))
+        result = pd.concat(pool.map(_get_values_forward, group_data))
+
+    result = result.reset_index()
+    result.set_index(["Model", "Scenario", "Region", "Year", "Variable"], inplace=True)
     result.sort_index(inplace=True)
+    print(result)
 
     # Cleanup trajectories with NaNs and zeros
     result = result.dropna()
@@ -74,6 +78,21 @@ def _shake(df):
     return result
 
 
+def sequences(n_samples=None):
+    df_trajectories = get_trajectories()
+    if n_samples:
+        df_trajectories = df_trajectories[:n_samples]
+    df = df_trajectories[
+        df_trajectories.index.get_level_values("Variable").isin(indicators)
+    ]
+    df = df.drop(columns=["Unit"])
+
+    df_sequences = _shake(df)
+    return df_sequences
+
+
+# sample = sequences(20000)
+
 # %%
 
 try:
@@ -83,13 +102,7 @@ except (IOError, EOFError, pickle.UnpicklingError) as e_read:
     print("Unable to access ", FILENAME_CLEAN, ":", e_read, ".")
     print("Attempting to create it.")
     try:
-        df_trajectories = get_trajectories()
-        df = df_trajectories[
-            df_trajectories.index.get_level_values("Variable").isin(indicators)
-        ]
-        df = df.drop(columns=["Unit"])
-
-        df_sequences = _shake(df)
+        df_sequences = sequences()
         df_sequences.to_pickle(FILENAME_CLEAN)
         print("Cleaned OWID trajectories saved successfully!")
     except Exception as e:
