@@ -19,24 +19,24 @@ floor = 0.0001
 df = df.reset_index()
 
 world_1990_reset = world_1990.reset_index()
-world_1990_reset.columns = ["Variable", "unit"]
+world_1990_reset.columns = ["variable", "unit"]
 
-df = pd.merge(df, world_1990_reset, on="Variable", how="left")
+df = pd.merge(df, world_1990_reset, on="variable", how="left")
 
 columns_to_divide = [
-    "Value",
-    "Value_Y+5",
-    "Value_Y+10",
-    "Value_Y+15",
-    "Value_Y+20",
-    "Value_Y+25",
+    "value",
+    "value_Y+5",
+    "value_Y+10",
+    "value_Y+15",
+    "value_Y+20",
+    "value_Y+25",
 ]
 
 for col in columns_to_divide:
     df[col] = df[col] / df["unit"]
 
 df = df.set_index(
-    ["Model", "Scenario", "Region", "Year", "Variable"], drop=True
+    ["Model", "Scenario", "countrycode", "year", "variable"], drop=True
 )  # Add the other index levels as needed
 
 df.drop(columns="unit", inplace=True)
@@ -44,12 +44,12 @@ df.drop(columns="unit", inplace=True)
 outliers = df[df.gt(threshold).any(axis=1)]
 print(outliers)
 
-values2010 = df.xs(2010, level="Year")["Value"]
+values2010 = df.xs(2010, level="year")["value"]
 outliers = values2010[values2010 < floor]
 print(outliers)
 
 # To check the values are really outliers
 # df_sub = df.xs('Global TIMES 2.0', level="Model")
-# q = df.xs(('EPPA 6', "gdp"), level=["Model", "Variable"])
-# q = df.xs(('IMACLIM-NLU 1.0', "co2"), level=["Model", "Variable"])
-# q = df.xs(('EU', 2010, "co2"), level=["Region", "Year", "Variable"])
+# q = df.xs(('EPPA 6', "gdp"), level=["Model", "variable"])
+# q = df.xs(('IMACLIM-NLU 1.0', "co2"), level=["Model", "variable"])
+# q = df.xs(('EU', 2010, "co2"), level=["Region", "year", "variable"])

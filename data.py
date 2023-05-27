@@ -37,7 +37,7 @@ def flat(array):
     return array.reshape(array.shape[0], -1)
 
 
-def sequence2array(df, indicators, units, level_names, group_keys):
+def sequence2array(df, indicators, units, group_keys):
     """Return data array after applying the select function and adjusting units."""
 
     assert indicators, "Indicators must be a non-empty list."
@@ -46,21 +46,21 @@ def sequence2array(df, indicators, units, level_names, group_keys):
     assert not (df == 0).any().any(), "DataFrame must not contains zero values"
 
     mask = pd.Series(
-        df.index.get_level_values(level_names).isin(indicators), index=df.index
+        df.index.get_level_values("variable").isin(indicators), index=df.index
     )
     group_counts = mask.groupby(level=group_keys).transform("sum")
     mask[group_counts != len(indicators)] = False
 
     subdf = df[mask].sort_index()
 
-    assert set(subdf.index.get_level_values(level_names).unique()) == set(
+    assert set(subdf.index.get_level_values("variable").unique()) == set(
         indicators
     ), "Incorrect Variables selection."
     assert (
         not subdf.empty
     ), "The result is empty. Match the list of indicators to observations data."
 
-    subdf = subdf.div(units, level=level_names, axis=0)
+    subdf = subdf.div(units, level="variable", axis=0)
 
     result = np.array([a for _, a in subdf.groupby(level=group_keys)])
     return result
@@ -77,16 +77,13 @@ def get_data(var=None, as_change=None, flatten=True):
     if var is None:
         var = all_vars
 
-    observations = sequence2array(
-        df_observations, var, world_1990, "variable", ["country", "year"]
-    )
+    observations = sequence2array(df_observations, var, world_1990, ["country", "year"])
 
     simulations = sequence2array(
         df_simulations,
         var,
         world_1990,
-        "Variable",
-        ["Model", "Scenario", "Region", "Year"],
+        ["Model", "Scenario", "countrycode", "year"],
     )
 
     print(

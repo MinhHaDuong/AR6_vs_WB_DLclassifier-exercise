@@ -45,7 +45,7 @@ def train_eval_powerset(model, all_vars, as_change):
     result = pd.DataFrame(
         columns=["AUC", "F1", "Precision", "Recall", "Accuracy", "Sample Balance"]
     )
-    result.index.name = "Variables"
+    result.index.name = "variables"
 
     for r in range(1, len(all_vars) + 1):
         for subset in itertools.combinations(all_vars, r):
@@ -95,9 +95,9 @@ model = xgb.XGBClassifier(**params)
 result = train_eval_powerset(model, all_vars, AS_CHANGE)
 
 result.reset_index(level=0, inplace=True)
-result["Variables"] = result["Variables"].str.replace(",)", ")")
-result["Variables"] = result["Variables"].str.replace("'", "")
-result.set_index("Variables", inplace=True)
+result["variables"] = result["variables"].str.replace(",)", ")")
+result["variables"] = result["variables"].str.replace("'", "")
+result.set_index("variables", inplace=True)
 
 result_byF1 = result.sort_values(by="F1", ascending=False)
 result_byAUC = result.sort_values(by="AUC", ascending=False)
@@ -146,13 +146,13 @@ def clean(result):
     for v in list(all_vars):
         if v in result.columns:
             result = result.drop(columns=v)
-    if "Variables" not in result.columns:
+    if "variables" not in result.columns:
         variables = [
             subset
             for r in range(1, len(all_vars) + 1)
             for subset in itertools.combinations(all_vars, r)
         ]
-        result["Variables"] = variables
+        result["variables"] = variables
     return result
 
 

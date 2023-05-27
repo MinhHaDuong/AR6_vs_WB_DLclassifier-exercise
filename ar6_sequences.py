@@ -21,47 +21,55 @@ var_map = {
 }
 indicators = list(var_map.keys())
 
+index_map = {
+    "Variable": "variable",
+    "Year": "year",
+    "Region": "countrycode",
+}
+
 
 def _get_values_forward(group):
-    group = group.reset_index().set_index("Year")
+    group = group.reset_index()
+    group = group.set_index("Year")
     group = group.drop(columns=["Model", "Scenario", "Region", "Variable"])
-    group["Value_Y+5"] = group["Value"].reindex(group.index + 5).values
-    group["Value_Y+10"] = group["Value"].reindex(group.index + 10).values
-    group["Value_Y+15"] = group["Value"].reindex(group.index + 15).values
-    group["Value_Y+20"] = group["Value"].reindex(group.index + 20).values
-    group["Value_Y+25"] = group["Value"].reindex(group.index + 25).values
+    group["value_Y+5"] = group["value"].reindex(group.index + 5).values
+    group["value_Y+10"] = group["value"].reindex(group.index + 10).values
+    group["value_Y+15"] = group["value"].reindex(group.index + 15).values
+    group["value_Y+20"] = group["value"].reindex(group.index + 20).values
+    group["value_Y+25"] = group["value"].reindex(group.index + 25).values
     return group
 
 
 def _shake(df):
     # Melt the dataframe from wide to long format
-    result = (
-        df.reset_index()
-        .melt(
-            id_vars=["Model", "Scenario", "Region", "Variable"],
-            value_vars=df.columns,
-            var_name="Year",
-            value_name="Value",
-        )
-        .dropna()
+    result = df.reset_index()
+
+    result = result.melt(
+        id_vars=["Model", "Scenario", "Region", "Variable"],
+        value_vars=result.columns,
+        var_name="Year",
+        value_name="value",
     )
 
-    result["Year"] = result["Year"].astype(int)
+    result = result.dropna()
+
+    result["Year"] = result["Year"].astype("int16")
     result.set_index(["Model", "Scenario", "Region", "Variable", "Year"], inplace=True)
 
     # Create the trajectories
     result = result.groupby(["Model", "Scenario", "Region", "Variable"]).apply(
         _get_values_forward
     )
-    result = result.reorder_levels(
-        ["Model", "Scenario", "Region", "Year", "Variable"]
-    ).sort_index()
+    result = result.reorder_levels(["Model", "Scenario", "Region", "Year", "Variable"])
+    result.sort_index(inplace=True)
 
     # Cleanup trajectories with NaNs and zeros
     result = result.dropna()
     result = result[(result != 0).all(axis=1)]
 
+    # Align level names and variable labels
     result = result.rename(index=var_map)
+    result = result.rename_axis(index=index_map)
 
     return result
 
