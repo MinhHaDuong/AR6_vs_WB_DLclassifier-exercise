@@ -15,6 +15,8 @@ from keras.models import Sequential
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
+# from joblib import Parallel, delayed
+
 from data import get_sets, all_vars
 from classifier_others import model_dummy, model_lr, model_rf, model_svm, model_xgb
 from classifier_mlp import model_mlp
@@ -89,11 +91,11 @@ def compare(models_dict, x_train, x_test, y_train, y_test):
             "F1",
             "precision",
             "recall",
-            "model",
             "tp",
             "tn",
             "fp",
-            "fn"
+            "fn",
+            "model",
         ]
     )
     result.index.name = "classifier"
@@ -102,6 +104,17 @@ def compare(models_dict, x_train, x_test, y_train, y_test):
         print(label, end=":   ")
         values = train_and_evaluate(model, x_train, x_test, y_train, y_test)
         result.loc[label] = values
+
+    # def process_model(label, model):
+    #     print(label, end=":   ")
+    #     values = train_and_evaluate(model, x_train, x_test, y_train, y_test)
+    #     return label, values
+
+    # parallel_results = Parallel(n_jobs=-1)(delayed(process_model)(label, model) for label, model in models_dict.items())
+
+    # for label, values in parallel_results:
+    #     result.loc[label] = values
+
 
     return result
 
@@ -121,7 +134,8 @@ models_dict = {
     "Multilayer perceptron ter": model_mlp(x_train.shape[1]),
     "Multilayer perceptron 256/0.3/128/0.2/64/0.1": model_mlp(x_train.shape[1], 256, 0.3, 128, 0.2, 64, 0.1),
     "Multilayer perceptron 256/0/128/0": model_mlp(x_train.shape[1], 256, 0, 128, 0),
-    "Multilayer perceptron 128/0.3/32/0.1": model_mlp(x_train.shape[1], 128, 0.3, 32, 0.1),
+    "Multilayer perceptron 256/0/128/0/64/0": model_mlp(x_train.shape[1], 256, 0, 128, 0, 64, 0),
+#    "Multilayer perceptron 128/0.3/32/0.1": model_mlp(x_train.shape[1], 128, 0.3, 32, 0.1),
     "Multilayer perceptron 128/0/32/0.1": model_mlp(x_train.shape[1], 128, 0, 32, 0.1),
     "Multilayer perceptron 128/0/32/0": model_mlp(x_train.shape[1], 128, 0, 32, 0),
     "Multilayer perceptron 64/0.3/16/0.1/8/0": model_mlp(x_train.shape[1], 64, 0.3, 16, 0.1, 8, 0),

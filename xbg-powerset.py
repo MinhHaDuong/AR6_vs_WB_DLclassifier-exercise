@@ -13,7 +13,9 @@ import xgboost as xgb
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import classification_report, roc_auc_score
-
+from imblearn.over_sampling import SMOTE
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import shuffle
 
 from data import get_sets, all_vars
 
@@ -21,6 +23,18 @@ from data import get_sets, all_vars
 
 
 def train_and_evaluate_model(model, x_train, y_train, x_test, y_test):
+    # Normalize data
+    scaler = StandardScaler()
+    x_train = scaler.fit_transform(x_train)
+    x_test = scaler.transform(x_test)
+
+    # Rebalance data
+    sm = SMOTE(random_state=42)
+    x_train, y_train = sm.fit_resample(x_train, y_train)
+
+    # After resampling, we may need to shuffle the data
+    x_train, y_train = shuffle(x_train, y_train, random_state=42)
+
     model.fit(x_train, y_train)
     y_pred = model.predict(x_test)
 
