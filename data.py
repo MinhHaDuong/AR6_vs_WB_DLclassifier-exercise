@@ -87,7 +87,7 @@ def get_data(var=None, as_change=None, flatten=True):
     )
 
     print(
-        f"{var}    {len(simulations)} simulations, {len(observations)} observation sequences"
+        f"{var}\tobservations:\t{len(observations)}\tsimulations:\t{len(simulations)}"
     )
 
     labels = np.concatenate([np.zeros(len(simulations)), np.ones(len(observations))])
@@ -103,6 +103,6 @@ def get_data(var=None, as_change=None, flatten=True):
     return data, labels
 
 
-def get_sets():
-    data, labels = get_data()
+def get_sets(var=None, as_change=None):
+    data, labels = get_data(var, as_change)
     return train_test_split(data, labels, test_size=0.2, random_state=42)

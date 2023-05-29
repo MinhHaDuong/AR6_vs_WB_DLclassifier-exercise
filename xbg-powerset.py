@@ -12,13 +12,10 @@ import pandas as pd
 import xgboost as xgb
 import matplotlib.pyplot as plt
 
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, roc_auc_score
 
 
-from data import get_data, all_vars
-
-AS_CHANGE = True
+from data import get_sets, all_vars
 
 # %%
 
@@ -28,7 +25,8 @@ def train_and_evaluate_model(model, x_train, y_train, x_test, y_test):
     y_pred = model.predict(x_test)
 
     score = classification_report(y_test, y_pred, output_dict=True)
-    auc_score = roc_auc_score(y_test, y_pred)
+    auc = roc_auc_score(y_test, y_pred)
+    f1 = score["weighted avg"]["f1-score"]
     precision = score["weighted avg"]["precision"]
     recall = score["weighted avg"]["recall"]
     accuracy = score["accuracy"]
@@ -38,10 +36,10 @@ def train_and_evaluate_model(model, x_train, y_train, x_test, y_test):
     num_negatives = len(y_train) - num_positives
     sample_balance = num_positives / num_negatives
 
-    return score, auc_score, precision, recall, accuracy, sample_balance
+    return auc, f1, precision, recall, accuracy, sample_balance
 
 
-def train_eval_powerset(model, all_vars, as_change):
+def train_eval_powerset(model):
     result = pd.DataFrame(
         columns=["AUC", "F1", "Precision", "Recall", "Accuracy", "Sample Balance"]
     )
@@ -49,28 +47,10 @@ def train_eval_powerset(model, all_vars, as_change):
 
     for r in range(1, len(all_vars) + 1):
         for subset in itertools.combinations(all_vars, r):
-            data, labels = get_data(subset, as_change=as_change)
-            x_train, x_test, y_train, y_test = train_test_split(
-                data, labels, test_size=0.2, random_state=42
-            )
-
-            # Use our new function here
-            (
-                score,
-                auc_score,
-                precision,
-                recall,
-                accuracy,
-                sample_balance,
-            ) = train_and_evaluate_model(model, x_train, y_train, x_test, y_test)
-            result.loc[str(subset)] = [
-                auc_score,
-                score["weighted avg"]["f1-score"],
-                precision,
-                recall,
-                accuracy,
-                sample_balance,
-            ]
+            x_train, x_test, y_train, y_test = get_sets(subset, as_change=True)
+            values = train_and_evaluate_model(model, x_train, y_train, x_test, y_test)
+            key = str(subset).replace(",)", ")").replace("'", "")
+            result.loc[key] = values
 
     return result
 
@@ -90,17 +70,14 @@ params = {
 
 model = xgb.XGBClassifier(**params)
 
+# %% Run the classifications
+
+result = train_eval_powerset(model)
+
 # %%
 
-result = train_eval_powerset(model, all_vars, AS_CHANGE)
 
-result.reset_index(level=0, inplace=True)
-result["variables"] = result["variables"].str.replace(",)", ")")
-result["variables"] = result["variables"].str.replace("'", "")
-result.set_index("variables", inplace=True)
-
-result_byF1 = result.sort_values(by="F1", ascending=False)
-result_byAUC = result.sort_values(by="AUC", ascending=False)
+TAB = "\t"
 
 message = f"""
 Are IPCC AR6 scenarios realistic?
@@ -127,57 +104,13 @@ Results shows that
 
 {result}
 
-Sorted by F1
-{result_byF1.to_string()}
+Cut and paste-ready: Sorted by F1, tab-separated
+{result.sort_values(by="F1", ascending=False).round(3).to_csv(sep=TAB)}
 """
 
 print(message)
-with open(f"xbg-powerset-change{AS_CHANGE}.txt", "w", encoding="utf-8") as f:
+with open("xbg-powerset.txt", "w", encoding="utf-8") as f:
     print(message, file=f)
-
-# %%
-
-
-def clean(result):
-    if "level_0" in result.columns:
-        result = result.drop(columns="level_0")
-    if "index" in result.columns:
-        result = result.drop(columns="index")
-    for v in list(all_vars):
-        if v in result.columns:
-            result = result.drop(columns=v)
-    if "variables" not in result.columns:
-        variables = [
-            subset
-            for r in range(1, len(all_vars) + 1)
-            for subset in itertools.combinations(all_vars, r)
-        ]
-        result["variables"] = variables
-    return result
-
-
-result = clean(result)
-
-try:
-    result = result.reset_index()
-except ValueError:
-    print("Failed to reset_index. Any column names conflict with index levels?")
-
-try:
-    result = result.set_index("Variables")
-except KeyError:
-    print("Failed to set_index. Is Variable column present?")
-
-for v in list(all_vars):
-    print(f"Checking if we have column {v}")
-    if v not in result.columns:
-        print("... Creating it")
-        result[v] = [v in i for i in result.index]
-
-result = result.reset_index()  # Move "Variables" in the columns
-result.set_index(list(all_vars), inplace=True)
-
-clean(result)
 
 # %%
 
@@ -187,24 +120,26 @@ def graph(score_name):
     _, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
     y0 = result[score_name].min() * 0.99
 
-    for variable, ax in zip(result.index.names, axes.flatten()):
-        # Filter the series for when the variable is True and False
-        true_values = result[score_name].xs(True, level=variable)
-        false_values = result[score_name].xs(False, level=variable)
+    for variable, ax in zip(["co2", "gdp", "pop", "tpec"], axes.flatten()):
+        mask = result.index.str.contains(variable)
+        true_values = result[mask][score_name]
+        false_values = result[~mask][score_name]
         values = [true_values, false_values]
 
-        ax.boxplot(values, labels=["In", "Out"], positions=[1, 2])
-        # Add individual data points
+        ax.boxplot(values, positions=[1, 2])
+        ax.set_xticklabels([f"{variable} present\n", f"{variable} absent\n"])
+        ax.tick_params(axis="x", which="both", length=0)
+
         for i, value in enumerate(values, start=1):
             y = value
             x = [i] * len(y)
-            ax.plot(x, y, "r.", alpha=0.8)  # 'r.' specifies red dots
+            ax.plot(x, y, "r.", alpha=0.8)
 
         ax.set_ylim(y0, 1)
-        ax.set_title(f"{variable}")
-        ax.set_ylabel(score_name)
 
-    plt.suptitle(f"Classifier score {score_name} with or without variables")
+    plt.suptitle(
+        f"Effect of the presence of a variable on the classifier performance ({score_name} score)"
+    )
     plt.tight_layout()
     plt.savefig(f"single_variable_{score_name}.png")
     plt.show()
