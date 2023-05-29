@@ -22,12 +22,14 @@ from data import get_data, get_sets
 # Multilayers perceptron
 
 
-def model_mlp(input_dim, n1=224, d1=0.3, n2=64, d2=0.1):
+def model_mlp(input_dim, n1=224, d1=0.3, n2=64, d2=0.1, n3=1, d3=0):
     model = Sequential()
     model.add(Dense(n1, activation="relu", input_dim=input_dim))
-    model.add(Dropout(0.3))
+    model.add(Dropout(d1))
     model.add(Dense(n2, activation="relu"))
-    model.add(Dropout(0.1))
+    model.add(Dropout(d2))
+    model.add(Dense(n3, activation="relu"))
+    model.add(Dropout(d3))
     model.add(Dense(1, activation="sigmoid"))
 
     model.compile(
