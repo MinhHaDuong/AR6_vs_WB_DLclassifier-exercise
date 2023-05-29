@@ -101,10 +101,19 @@ x_train, x_test, y_train, y_test = get_sets(all_vars, as_change=True)
 models_dict = {
     "Dummy baseline": model_dummy,
     "Logistic regression": model_lr,
-    "Random forest": model_rf,
     "Support vector machine": model_svm,
+    "Random forest": model_rf,
     "Gradient boosting machine": model_xgb,
-    "Multilayer perceptron": model_mlp(x_train.shape[1]),
+    "Multilayer perceptron 224/0.3/64/0.1": model_mlp(x_train.shape[1]),
+    "Multilayer perceptron bis": model_mlp(x_train.shape[1]),
+    "Multilayer perceptron ter": model_mlp(x_train.shape[1]),
+    "Multilayer perceptron 256/0/128/0": model_mlp(x_train.shape[1], 256, 0, 128, 0),
+    "Multilayer perceptron 128/0.3/32/0.1": model_mlp(x_train.shape[1], 128, 0.3, 32, 0.1),
+    "Multilayer perceptron 128/0/32/0.1": model_mlp(x_train.shape[1], 128, 0, 32, 0.1),
+    "Multilayer perceptron 128/0/32/0": model_mlp(x_train.shape[1], 128, 0, 32, 0),
+    "Multilayer perceptron 64/0.3/16/0.1": model_mlp(x_train.shape[1], 64, 0.3, 16, 0.1),
+    "Multilayer perceptron 64/0/16/0.1": model_mlp(x_train.shape[1], 64, 0, 16, 0.1),
+    "Multilayer perceptron 32/0/16/0": model_mlp(x_train.shape[1], 32, 0, 16, 0),
 }
 
 result = compare(models_dict, x_train, x_test, y_train, y_test)
