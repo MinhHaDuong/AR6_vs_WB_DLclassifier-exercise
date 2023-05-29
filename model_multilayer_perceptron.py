@@ -1,4 +1,4 @@
-""" Separate AR6 scenarios from past observations
+""" Define a multilayer perceptron classifier to separate AR6 scenarios from past observations
 
 Created on Tue May  9 21:02:33 2023
 @author: haduong@centre-cired.fr
@@ -8,7 +8,6 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.callbacks import EarlyStopping
 
-
 import tensorflow as tf
 from tensorflow.keras import layers, metrics
 import tensorflow_addons as tfa
@@ -17,26 +16,18 @@ from keras_tuner.engine.objective import Objective
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import classification_report
 
-from data import get_data, get_sets, indicators_simulations, indicators_observations
+from data import get_data, get_sets
 
 
 # Multilayers perceptron
 
 
-def classify(isim=None, iobs=None):
-    if isim is None:
-        isim = indicators_simulations
-    if iobs is None:
-        iobs = indicators_observations
-
-    x_train, x_test, y_train, y_test = get_sets()
-
-    data, labels = get_data()
-
+def model_mlp(input_dim):
     model = Sequential()
-    model.add(Dense(96, activation="relu", input_dim=data.shape[1]))
-    model.add(Dense(128, activation="relu"))
+    model.add(Dense(224, activation="relu", input_dim=input_dim))
     model.add(Dropout(0.3))
+    model.add(Dense(64, activation="relu"))
+    model.add(Dropout(0.1))
     model.add(Dense(1, activation="sigmoid"))
 
     model.compile(
@@ -47,12 +38,17 @@ def classify(isim=None, iobs=None):
             metrics.Precision(name="precision"),
             metrics.Recall(name="recall"),
             metrics.AUC(name="auc"),
-            tfa.metrics.F1Score(
-                name="f1_score", num_classes=1, threshold=0.5
-            ),  # Adding F1 score
+            tfa.metrics.F1Score(name="f1_score", num_classes=1, threshold=0.5),
         ],
     )
 
+    return model
+
+
+# %% Example
+
+
+def train_model(model, x_train, y_train, x_test, y_test):
     early_stopping = EarlyStopping(
         monitor="val_loss", patience=3, verbose=1, restore_best_weights=True
     )
@@ -66,7 +62,10 @@ def classify(isim=None, iobs=None):
         callbacks=[early_stopping],
     )
 
-    # Use the model to make predictions on the test set
+    return model
+
+
+def test_model(model, x_test, y_test):
     y_pred = model.predict(x_test)
     y_pred = [round(pred[0]) for pred in y_pred]
 
@@ -80,21 +79,25 @@ def classify(isim=None, iobs=None):
     print("Test recall:", score[3])
     print("Test AUC:", score[4])
     print("Test F1 Score:", score[5])
+    return score
+
+
+def define_train_test():
+    x_train, x_test, y_train, y_test = get_sets()
+    model = model_mlp(x_train.shape[1])
+    model = train_model(model, x_train, y_train, x_test, y_test)
+    score = test_model(model, x_test, y_test)
+
     return score, model
 
 
-# Exemples
+# define_train_test()
 
-classify()
-
-classify(["Population"], ["population"])
 
 # %% Tune the model on the complete variables case
 
-x_train, x_test, y_train, y_test = get_sets()
 
-
-def build_model(hp):
+def model_mlp_tunable(hp):
     model = tf.keras.models.Sequential()
 
     data, labels = get_data()
@@ -134,26 +137,30 @@ def build_model(hp):
     return model
 
 
-tuner = RandomSearch(
-    build_model,
-    objective=Objective("val_auc", direction="max"),
-    max_trials=50,
-    directory="my_dir",
-    project_name="tune_model",
-)
+def tune_mlp():
+    x_train, x_test, y_train, y_test = get_sets()
 
-tuner.search_space_summary()
+    tuner = RandomSearch(
+        model_mlp_tunable,
+        objective=Objective("val_auc", direction="max"),
+        max_trials=50,
+        directory="my_dir",
+        project_name="MLP_tuning",
+    )
 
-tuner.search(
-    x_train,
-    y_train,
-    epochs=20,
-    validation_data=(x_test, y_test),
-    callbacks=[
-        tf.keras.callbacks.EarlyStopping(
-            monitor="val_loss", patience=3, verbose=1, restore_best_weights=True
-        )
-    ],
-)
+    tuner.search_space_summary()
 
-tuner.results_summary()
+    tuner.search(
+        x_train,
+        y_train,
+        epochs=20,
+        validation_data=(x_test, y_test),
+        callbacks=[
+            tf.keras.callbacks.EarlyStopping(
+                monitor="val_loss", patience=3, verbose=1, restore_best_weights=True
+            )
+        ],
+    )
+
+    print(tuner.results_summary())
+    return tuner.results_summary()

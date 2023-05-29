@@ -77,6 +77,9 @@ def get_data(var=None, as_change=None, flatten=True):
     if var is None:
         var = all_vars
 
+    if isinstance(var, pd.Index):
+        var = var.tolist()
+
     observations = sequence2array(df_observations, var, world_1990, ["country", "year"])
 
     simulations = sequence2array(
