@@ -13,8 +13,8 @@ from keras.callbacks import EarlyStopping
 from keras.models import Sequential
 
 from data import get_sets, all_vars
-from model_classifiers import model_dummy, model_lr, model_rf, model_svm, model_xgb
-from model_multilayer_perceptron import model_mlp
+from classifier_others import model_dummy, model_lr, model_rf, model_svm, model_xgb
+from classifier_mlp import model_mlp
 
 # %%
 
@@ -127,5 +127,5 @@ Run saved: {datetime.datetime.now()}
 {table.to_csv(sep=tab)}
 """
 
-with open("model_compare.txt", "w", encoding="utf-8") as f:
+with open("classifiers_compare.txt", "w", encoding="utf-8") as f:
     print(message, file=f)
