@@ -3,13 +3,17 @@ import logging
 
 
 def setup_logger():
+    # Configure the root logger:
+    logger = logging.getLogger()
+
+    # Return early if handlers are already configured
+    if logger.hasHandlers():
+        return
+
+    logger.setLevel(logging.INFO)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-
-    # Configure the root logger:
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
 
     # Configure the console handler
     ch = logging.StreamHandler()
