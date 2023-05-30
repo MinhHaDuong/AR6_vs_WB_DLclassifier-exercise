@@ -1,13 +1,13 @@
 venv/
 __pycache__/
 .ipynb_checkpoints/
+.spyproject/config/workspace.ini
 backups
 *.npy
 *.pkl
-.spyproject/config/workspace.ini
 *.png
 *.txt
 attic/
 trash/
 my_dir/
-result.csv
+info.log
