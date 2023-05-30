@@ -113,7 +113,7 @@ keys = [
 
 print(pretty_print(results, keys, "to_string"))
 
-with open("classifiers_compare_kind.txt", "w", encoding="utf-8") as f:
+with open("classifiers_compare_kind.csv", "w", encoding="utf-8") as f:
     print(pretty_print(results, keys, "to_csv", sep="\t"), file=f)
 
 results.to_pickle("classifiers_compare_kind.pkl")

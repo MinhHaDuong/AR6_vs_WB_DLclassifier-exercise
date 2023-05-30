@@ -82,7 +82,7 @@ x_raw_train, x_raw_test, y_train, y_test = get_sets(all_vars, as_change=True)
 models_dict = {
     "Dummy baseline": model_dummy,
     "Gradient boosting machine": model_xgb,
-    "Multilayer perceptron 64/0/32/0/16/0": model_mlp(
+    "Multilayer perceptron": model_mlp(
         x_raw_train.shape[1], 64, 0, 32, 0, 16, 0
     ),
     "bis": model_mlp(x_raw_train.shape[1], 64, 0, 32, 0, 16, 0),
@@ -112,7 +112,7 @@ results.loc["normalized"] = compare(
 )
 
 x_pca_train, x_pca_test = perform_pca(x_train_scaled_resampled, x_test_scaled)
-models_dict["Multilayer perceptron 256/0/128/0"] = model_mlp(
+models_dict["Multilayer perceptron"] = model_mlp(
     x_pca_train.shape[1], 64, 0, 32, 0, 16, 0
 )
 models_dict["bis"] = model_mlp(x_pca_train.shape[1], 64, 0, 32, 0, 16, 0)
@@ -122,7 +122,7 @@ results.loc["PCA"] = compare(
 )
 
 x_umap_train, x_umap_test = perform_umap(x_train_scaled_resampled, x_test_scaled)
-models_dict["Multilayer perceptron 256/0/128/0"] = model_mlp(
+models_dict["Multilayer perceptron"] = model_mlp(
     x_umap_train.shape[1], 64, 0, 32, 0, 16, 0
 )
 models_dict["bis"] = model_mlp(x_umap_train.shape[1], 64, 0, 32, 0, 16, 0)
@@ -134,7 +134,7 @@ results.loc["UMAP"] = compare(
 x_latent_train, x_latent_test = perform_autoencode(
     x_train_scaled_resampled, x_test_scaled
 )
-models_dict["Multilayer perceptron 256/0/128/0"] = model_mlp(
+models_dict["Multilayer perceptron"] = model_mlp(
     x_latent_train.shape[1], 64, 0, 32, 0, 16, 0
 )
 models_dict["bis"] = model_mlp(x_latent_train.shape[1], 64, 0, 32, 0, 16, 0)
@@ -157,5 +157,5 @@ keys = ["raw", "normalized", "PCA", "UMAP", "latent"]
 
 print(pretty_print(results, keys, "to_string"))
 
-with open("classifiers_compare_autoencoder.txt", "w", encoding="utf-8") as f:
+with open("classifiers_compare_autoencoder.csv", "w", encoding="utf-8") as f:
     print(pretty_print(results, keys, "to_csv", sep="\t"), file=f)

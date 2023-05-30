@@ -123,7 +123,7 @@ Cut and paste-ready: Sorted by F1, tab-separated
 """
 
 print(message)
-with open("xbg-powerset.txt", "w", encoding="utf-8") as f:
+with open("xbg-powerset.csv", "w", encoding="utf-8") as f:
     print(message, file=f)
 
 # %%

@@ -3,10 +3,9 @@ __pycache__/
 .ipynb_checkpoints/
 .spyproject/config/workspace.ini
 backups
-*.npy
 *.pkl
 *.png
-*.txt
+*.csv
 attic/
 trash/
 my_dir/

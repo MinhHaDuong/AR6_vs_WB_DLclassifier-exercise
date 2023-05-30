@@ -4,7 +4,7 @@ PRECIOUS=$(CLEANDATA) ar6_trajectories.pkl
 
 FIGURES_UNIVAR=fig1-levels.png fig2-changes.png fig3_2D.png fig3_3D.png fig4_cdf.png
 FIGURE_SENSITIVITY=single_variable_AUC.png single_variable_F1.png
-TABLES=xbg-powerset.txt classifiers_compare_kind.txt classifiers_compare_autoencoder.txt
+TABLES=xbg-powerset.csv classifiers_compare_kind.csv classifiers_compare_autoencoder.csv
 
 .PRECIOUS: $(PRECIOUS)
 
@@ -13,13 +13,13 @@ all: $(FIGURES_UNIVAR) $(TABLES) $(FIGURE_SENSITIVITY)
 $(FIGURES_UNIVAR): figures.py data.py $(CLEANDATA)
 	$(PYTHON) figures.py
 
-$(FIGURE_SENSITIVITY) xbg-powerset.txt: xbg-powerset.py data.py $(CLEANDATA)
+$(FIGURE_SENSITIVITY) xbg-powerset.csv: xbg-powerset.py data.py $(CLEANDATA)
 	$(PYTHON) xbg-powerset.py
 
-classifiers_compare_kind.txt classifiers_compare_kind.pkl: classifiers_compare_kind.py data.py $(CLEANDATA)
+classifiers_compare_kind.csv classifiers_compare_kind.pkl: classifiers_compare_kind.py data.py $(CLEANDATA)
 	$(PYTHON) classifiers_compare_kind.py
 
-classifiers_compare_autoencoder.txt: classifiers_compare_autoencoder.py data.py $(CLEANDATA)
+classifiers_compare_autoencoder.csv: classifiers_compare_autoencoder.py data.py $(CLEANDATA)
 	$(PYTHON) classifiers_compare_autoencoder.py
 
 owid_sequences.pkl: owid_sequences.py owid-co2-data.csv owid_notcountry.csv
