@@ -82,11 +82,11 @@ x_raw_train, x_raw_test, y_train, y_test = get_sets(all_vars, as_change=True)
 models_dict = {
     "Dummy baseline": model_dummy,
     "Gradient boosting machine": model_xgb,
-    "Multilayer perceptron 256/0/128/0": model_mlp(
-        x_raw_train.shape[1], 256, 0, 128, 0
+    "Multilayer perceptron 64/0/32/0/16/0": model_mlp(
+        x_raw_train.shape[1], 64, 0, 32, 0, 16, 0
     ),
-    "bis": model_mlp(x_raw_train.shape[1], 256, 0, 128, 0),
-    "ter": model_mlp(x_raw_train.shape[1], 256, 0, 128, 0),
+    "bis": model_mlp(x_raw_train.shape[1], 64, 0, 32, 0, 16, 0),
+    "ter": model_mlp(x_raw_train.shape[1], 64, 0, 32, 0, 16, 0),
 }
 
 results.loc["raw"] = compare(
@@ -113,20 +113,20 @@ results.loc["normalized"] = compare(
 
 x_pca_train, x_pca_test = perform_pca(x_train_scaled_resampled, x_test_scaled)
 models_dict["Multilayer perceptron 256/0/128/0"] = model_mlp(
-    x_pca_train.shape[1], 256, 0, 128, 0
+    x_pca_train.shape[1], 64, 0, 32, 0, 16, 0
 )
-models_dict["bis"] = model_mlp(x_pca_train.shape[1], 256, 0, 128, 0)
-models_dict["ter"] = model_mlp(x_pca_train.shape[1], 256, 0, 128, 0)
+models_dict["bis"] = model_mlp(x_pca_train.shape[1], 64, 0, 32, 0, 16, 0)
+models_dict["ter"] = model_mlp(x_pca_train.shape[1], 64, 0, 32, 0, 16, 0)
 results.loc["PCA"] = compare(
     models_dict, x_pca_train, x_pca_test, y_train_resampled, y_test, parallelize=False
 )
 
 x_umap_train, x_umap_test = perform_umap(x_train_scaled_resampled, x_test_scaled)
 models_dict["Multilayer perceptron 256/0/128/0"] = model_mlp(
-    x_umap_train.shape[1], 256, 0, 128, 0
+    x_umap_train.shape[1], 64, 0, 32, 0, 16, 0
 )
-models_dict["bis"] = model_mlp(x_umap_train.shape[1], 256, 0, 128, 0)
-models_dict["ter"] = model_mlp(x_umap_train.shape[1], 256, 0, 128, 0)
+models_dict["bis"] = model_mlp(x_umap_train.shape[1], 64, 0, 32, 0, 16, 0)
+models_dict["ter"] = model_mlp(x_umap_train.shape[1], 64, 0, 32, 0, 16, 0)
 results.loc["UMAP"] = compare(
     models_dict, x_umap_train, x_umap_test, y_train_resampled, y_test, parallelize=False
 )
@@ -135,10 +135,10 @@ x_latent_train, x_latent_test = perform_autoencode(
     x_train_scaled_resampled, x_test_scaled
 )
 models_dict["Multilayer perceptron 256/0/128/0"] = model_mlp(
-    x_latent_train.shape[1], 256, 0, 128, 0
+    x_latent_train.shape[1], 64, 0, 32, 0, 16, 0
 )
-models_dict["bis"] = model_mlp(x_latent_train.shape[1], 256, 0, 128, 0)
-models_dict["ter"] = model_mlp(x_latent_train.shape[1], 256, 0, 128, 0)
+models_dict["bis"] = model_mlp(x_latent_train.shape[1], 64, 0, 32, 0, 16, 0)
+models_dict["ter"] = model_mlp(x_latent_train.shape[1], 64, 0, 32, 0, 16, 0)
 results.loc["latent"] = compare(
     models_dict,
     x_latent_train,
