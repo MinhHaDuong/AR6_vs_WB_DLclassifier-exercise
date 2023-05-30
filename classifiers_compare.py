@@ -15,6 +15,11 @@ from keras.models import Sequential
 
 from joblib import Parallel, delayed
 
+from log_config import setup_logger
+
+setup_logger()
+logger = logging.getLogger(__name__)
+
 
 def train_and_evaluate(model, x_train, x_test, y_train, y_test):
     if not hasattr(model, "fit"):
@@ -38,7 +43,7 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
             callbacks=[early_stopping],
         )
     else:
-        logging.info("Fitting ML classifier model, ", end="")
+        logging.info("Fitting ML classifier model.")
         model.fit(x_train, y_train)
 
     train_t = process_time() - start
@@ -120,10 +125,13 @@ def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
 def format_table(results, key, formatter, **kwargs):
     table = results.loc[key, "result"][results.loc[key, "result"].columns[:-5]].round(3)
     duration = results.loc[key, "duration"]
-    
+
     formatted_table = getattr(table, formatter)(**kwargs)
-    
-    return f"\n{key.capitalize()} (Duration: {duration} seconds):\n" + f"{formatted_table}\n"
+
+    return (
+        f"\n{key.capitalize()} (Duration: {duration} seconds):\n"
+        + f"{formatted_table}\n"
+    )
 
 
 def pretty_print(results, keys, formatter, **kwargs):
