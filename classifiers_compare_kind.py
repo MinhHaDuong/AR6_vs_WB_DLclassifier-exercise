@@ -102,7 +102,14 @@ results.loc["parallel_resampled"] = compare(
 pd.set_option("display.max_columns", None)
 pd.set_option("display.width", 10000)
 
-keys=["unscaled", "parallel_unscaled", "scaled", "parallel_scaled", "resampled", "parallel_resampled"]
+keys = [
+    "unscaled",
+    "parallel_unscaled",
+    "scaled",
+    "parallel_scaled",
+    "resampled",
+    "parallel_resampled",
+]
 
 print(pretty_print(results, keys, "to_string"))
 
