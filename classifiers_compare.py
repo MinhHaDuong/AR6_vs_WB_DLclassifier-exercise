@@ -6,7 +6,7 @@ Created on Mon May 29 17:24:47 2023
 
 import pandas as pd
 
-from time import time
+from time import time, process_time
 import datetime
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 from keras.callbacks import EarlyStopping
@@ -30,7 +30,7 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
 
     is_keras_model = isinstance(model, Sequential)
 
-    start = time()
+    start = process_time()
 
     if is_keras_model:
         print("Training Keras model.")
@@ -49,18 +49,24 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
         print("Fitting, ", end="")
         model.fit(x_train, y_train)
 
-    train_t = time() - start
+    train_t = process_time() - start
 
     print("Predicting, ", end="")
-    start = time()
+    start = process_time()
 
     y_pred = model.predict(x_test)
     if is_keras_model:
         y_pred_continuous = y_pred.ravel()
         y_pred = (y_pred_continuous > 0.5).astype(int)
-    predict_t = time() - start
+    predict_t = process_time() - start
 
     print("Scoring.")
+    cm = confusion_matrix(y_test, y_pred)
+    tp = cm[1, 1]  # True positives
+    tn = cm[0, 0]  # True negatives
+    fp = cm[0, 1]  # False positives
+    fn = cm[1, 0]  # False negatives
+
     score = classification_report(y_test, y_pred, output_dict=True, zero_division=1)
     f1 = score["weighted avg"]["f1-score"]
     precision = score["weighted avg"]["precision"]
@@ -72,17 +78,11 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
     else:
         auc = roc_auc_score(y_test, y_pred)
 
-    cm = confusion_matrix(y_test, y_pred)
-    tp = cm[1, 1]  # True positives
-    tn = cm[0, 0]  # True negatives
-    fp = cm[0, 1]  # False positives
-    fn = cm[1, 0]  # False negatives
-
     return train_t, predict_t, tp, tn, fp, fn, auc, f1, precision, recall, model
 
 
-
 # %%
+
 
 def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=False):
     print("\nComparing classification models.")
@@ -102,16 +102,19 @@ def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=False):
         ]
     )
     result.index.name = "classifier"
-    
+
     start_time = time()
 
     if parallelize:
+
         def process_model(label, model):
             print(label, end=":   ")
             values = train_and_evaluate(model, x_train, x_test, y_train, y_test)
             return label, values
 
-        parallel_results = Parallel(n_jobs=-1)(delayed(process_model)(label, model) for label, model in models_dict.items())
+        parallel_results = Parallel(n_jobs=-1)(
+            delayed(process_model)(label, model) for label, model in models_dict.items()
+        )
 
         for label, values in parallel_results:
             result.loc[label] = values
@@ -121,7 +124,7 @@ def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=False):
             values = train_and_evaluate(model, x_train, x_test, y_train, y_test)
             result.loc[label] = values
 
-    duration = time() - start_time
+    duration = round(time() - start_time)
     return result, duration
 
 
@@ -138,90 +141,102 @@ models_dict = {
     "Multilayer perceptron 224/0.3/64/0.1": model_mlp(x_train.shape[1]),
     "Multilayer perceptron bis": model_mlp(x_train.shape[1]),
     "Multilayer perceptron ter": model_mlp(x_train.shape[1]),
-    "Multilayer perceptron 256/0.3/128/0.2/64/0.1": model_mlp(x_train.shape[1], 256, 0.3, 128, 0.2, 64, 0.1),
+    "Multilayer perceptron 256/0.3/128/0.2/64/0.1": model_mlp(
+        x_train.shape[1], 256, 0.3, 128, 0.2, 64, 0.1
+    ),
     "Multilayer perceptron 256/0/128/0": model_mlp(x_train.shape[1], 256, 0, 128, 0),
-    "Multilayer perceptron 256/0/128/0/64/0": model_mlp(x_train.shape[1], 256, 0, 128, 0, 64, 0),
+    "Multilayer perceptron 256/0/128/0/64/0": model_mlp(
+        x_train.shape[1], 256, 0, 128, 0, 64, 0
+    ),
     "Multilayer perceptron 128/0/32/0.1": model_mlp(x_train.shape[1], 128, 0, 32, 0.1),
     "Multilayer perceptron 128/0/32/0": model_mlp(x_train.shape[1], 128, 0, 32, 0),
-    "Multilayer perceptron 64/0.3/16/0.1/8/0": model_mlp(x_train.shape[1], 64, 0.3, 16, 0.1, 8, 0),
-    "Multilayer perceptron 64/0/16/0.1/8/0": model_mlp(x_train.shape[1], 64, 0, 16, 0.1, 8, 0),
-    "Multilayer perceptron 64/0/32/0/16/0": model_mlp(x_train.shape[1], 64, 0, 32, 0, 16, 0),
-    "Multilayer perceptron 32/0/16/0/8/0": model_mlp(x_train.shape[1], 32, 0, 16, 0, 8, 0),
+    "Multilayer perceptron 64/0.3/16/0.1/8/0": model_mlp(
+        x_train.shape[1], 64, 0.3, 16, 0.1, 8, 0
+    ),
+    "Multilayer perceptron 64/0/16/0.1/8/0": model_mlp(
+        x_train.shape[1], 64, 0, 16, 0.1, 8, 0
+    ),
+    "Multilayer perceptron 64/0/32/0/16/0": model_mlp(
+        x_train.shape[1], 64, 0, 32, 0, 16, 0
+    ),
+    "Multilayer perceptron 32/0/16/0/8/0": model_mlp(
+        x_train.shape[1], 32, 0, 16, 0, 8, 0
+    ),
 }
 
 
-results = pd.DataFrame(columns=['result', 'duration'])
+results = pd.DataFrame(columns=["result", "duration"])
 
-results.loc['unscaled'] = compare(models_dict, x_train, x_test, y_train, y_test, parallelize=False)
-results.loc['parallel_unscaled'] = compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True)
+results.loc["unscaled"] = compare(
+    models_dict, x_train, x_test, y_train, y_test, parallelize=False
+)
+results.loc["parallel_unscaled"] = compare(
+    models_dict, x_train, x_test, y_train, y_test, parallelize=True
+)
 
 scaler = StandardScaler()
 x_train_scaled = scaler.fit_transform(x_train)
 x_test_scaled = scaler.transform(x_test)
 
-results.loc['scaled'] = compare(models_dict, x_train_scaled, x_test_scaled, y_train, y_test, parallelize=False)
-results.loc['parallel_scaled'] = compare(models_dict, x_train_scaled, x_test_scaled, y_train, y_test, parallelize=True)
+results.loc["scaled"] = compare(
+    models_dict, x_train_scaled, x_test_scaled, y_train, y_test, parallelize=False
+)
+results.loc["parallel_scaled"] = compare(
+    models_dict, x_train_scaled, x_test_scaled, y_train, y_test, parallelize=True
+)
 
+# Resampled includes scaled
 smote = SMOTE(random_state=0)
-x_train_scaled_resampled, y_train_resampled = smote.fit_resample(x_train_scaled, y_train)
+x_train_scaled_resampled, y_train_resampled = smote.fit_resample(
+    x_train_scaled, y_train
+)
 
-results.loc['resampled'] = compare(models_dict, x_train_scaled_resampled, x_test_scaled, y_train_resampled, y_test, parallelize=False)
-results.loc['parallel_resampled'] = compare(models_dict, x_train_scaled_resampled, x_test_scaled, y_train_resampled, y_test, parallelize=True)
+results.loc["resampled"] = compare(
+    models_dict,
+    x_train_scaled_resampled,
+    x_test_scaled,
+    y_train_resampled,
+    y_test,
+    parallelize=False,
+)
+results.loc["parallel_resampled"] = compare(
+    models_dict,
+    x_train_scaled_resampled,
+    x_test_scaled,
+    y_train_resampled,
+    y_test,
+    parallelize=True,
+)
 
-# Now we can access the results and durations using the dictionary keys
-# Printing the result and duration
 
-for index, row in results.iterrows():
-    print(f"\n{index} result: \n{row['result']}")
-    print(f"{index} duration: {row['duration']} seconds")
-
-# Pretty printing
+# %% Print and save the profiled results
 
 pd.set_option("display.max_columns", None)
 pd.set_option("display.width", 10000)
 
-table_unscaled = results.loc['unscaled', 'result'][results.loc['unscaled', 'result'].columns[:-1]].round(3)
-table_parallel_unscaled = results.loc['parallel_unscaled', 'result'][results.loc['parallel_unscaled', 'result'].columns[:-1]].round(3)
+table_unscaled = results.loc["unscaled", "result"][
+    results.loc["unscaled", "result"].columns[:-1]
+].round(3)
+table_parallel_unscaled = results.loc["parallel_unscaled", "result"][
+    results.loc["parallel_unscaled", "result"].columns[:-1]
+].round(3)
 
-table_scaled = results.loc['scaled', 'result'][results.loc['scaled', 'result'].columns[:-1]].round(3)
-table_parallel_scaled = results.loc['parallel_scaled', 'result'][results.loc['parallel_scaled', 'result'].columns[:-1]].round(3)
+table_scaled = results.loc["scaled", "result"][
+    results.loc["scaled", "result"].columns[:-1]
+].round(3)
+table_parallel_scaled = results.loc["parallel_scaled", "result"][
+    results.loc["parallel_scaled", "result"].columns[:-1]
+].round(3)
 
-table_resampled = results.loc['resampled', 'result'][results.loc['resampled', 'result'].columns[:-1]].round(3)
-table_parallel_resampled = results.loc['parallel_resampled', 'result'][results.loc['parallel_resampled', 'result'].columns[:-1]].round(3)
-
-tab = "\t"
-message = f"""
-Performance of different classifiers on the owid vs. ar6 dataset
-
-Author: haduong@centre-cired.fr
-Run saved: {datetime.datetime.now()}
-
-Unscaled (Duration: {results.loc['unscaled', 'duration']} seconds):
-{table_unscaled.to_csv(sep=tab)}
-
-Parallel Unscaled (Duration: {results.loc['parallel_unscaled', 'duration']} seconds):
-{table_parallel_unscaled.to_csv(sep=tab)}
-
-Scaled (Duration: {results.loc['scaled', 'duration']} seconds):
-{table_scaled.to_csv(sep=tab)}
-
-Parallel Scaled (Duration: {results.loc['parallel_scaled', 'duration']} seconds):
-{table_parallel_scaled.to_csv(sep=tab)}
-
-Resampled (Duration: {results.loc['resampled', 'duration']} seconds):
-{table_resampled.to_csv(sep=tab)}
-
-Parallel Resampled (Duration: {results.loc['parallel_resampled', 'duration']} seconds):
-{table_parallel_resampled.to_csv(sep=tab)}
-"""
-
-with open("classifiers_compare.txt", "w", encoding="utf-8") as f:
-    print(message, file=f)
+table_resampled = results.loc["resampled", "result"][
+    results.loc["resampled", "result"].columns[:-1]
+].round(3)
+table_parallel_resampled = results.loc["parallel_resampled", "result"][
+    results.loc["parallel_resampled", "result"].columns[:-1]
+].round(3)
 
 
-# %% New pretty printing code
-
-def message2(formatter, **kwargs):
+def message(formatter, **kwargs):
     return f"""
     Performance of different classifiers on the owid vs. ar6 dataset
     
@@ -240,14 +255,17 @@ def message2(formatter, **kwargs):
     Parallel Scaled (Duration: {results.loc['parallel_scaled', 'duration']} seconds):
     {getattr(table_parallel_scaled, formatter)(**kwargs)}
     
-    Resampled (Duration: {results.loc['resampled', 'duration']} seconds):
+    Resampled Scaled (Duration: {results.loc['resampled', 'duration']} seconds):
     {getattr(table_resampled, formatter)(**kwargs)}
     
-    Parallel Resampled (Duration: {results.loc['parallel_resampled', 'duration']} seconds):
+    Parallel Resampled Scaled (Duration: {results.loc['parallel_resampled', 'duration']} seconds):
     {getattr(table_parallel_resampled, formatter)(**kwargs)}
     """
 
-print(message2('to_string'))
 
-with open("classifiers_compare-new.txt", "w", encoding="utf-8") as f:
-    print(message2('to_csv', sep='\t'), file=f)
+print(message("to_string"))
+
+with open("classifiers_compare.txt", "w", encoding="utf-8") as f:
+    print(message("to_csv", sep="\t"), file=f)
+
+results.to_pickle("classifiers_compare.pkl")
