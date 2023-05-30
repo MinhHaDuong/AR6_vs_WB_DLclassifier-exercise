@@ -17,6 +17,11 @@ import pickle
 import logging
 import pandas as pd
 
+from log_config import setup_logger
+
+setup_logger()
+logger = logging.getLogger(__name__)
+
 # Got it at  https://github.com/owid/co2-data/blob/master/owid-co2-data.csv
 # Units at https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv
 FILENAME_RAW = "owid-co2-data.csv"
@@ -102,10 +107,10 @@ def shake(df):
 
 try:
     df_sequences = pd.read_pickle(FILENAME_CLEAN)
-    logging.info("Success read file", FILENAME_CLEAN)
+    logging.info(f"Success read file {FILENAME_CLEAN} ")
 except (IOError, EOFError, pickle.UnpicklingError) as e_read:
     logging.info(
-        "Unable to access ", FILENAME_CLEAN, ":", e_read, ".\nAttempting to create it."
+        f"Unable to access {FILENAME_CLEAN} : {e_read} \nAttempting to create it."
     )
     try:
         with open(FILENAME_NOTCOUNTRY, "r") as file:
@@ -115,4 +120,4 @@ except (IOError, EOFError, pickle.UnpicklingError) as e_read:
         df_sequences.to_pickle(FILENAME_CLEAN)
         logging.info("Cleaned OWID sequences saved successfully!")
     except Exception as e:
-        logging.error("An error occurred while saving the OWID trajectories:", e)
+        logging.error(f"An error occurred while saving the OWID trajectories: {e} ")

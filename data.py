@@ -13,6 +13,11 @@ from sklearn.model_selection import train_test_split
 from owid_sequences import df_sequences as df_observations
 from ar6_sequences import df_sequences as df_simulations
 
+from log_config import setup_logger
+
+setup_logger()
+logger = logging.getLogger(__name__)
+
 
 # Source ourworldindata.org
 world_1990 = pd.Series(
@@ -92,7 +97,7 @@ def get_data(var=None, as_change=None, flatten=True):
     )
 
     logging.info(
-        f"{var}\tobservations:\t{len(observations)}\tsimulations:\t{len(simulations)}"
+        f"{len(observations)} observations \t{len(simulations)} simulations\tfor {var}"
     )
 
     labels = np.concatenate([np.zeros(len(simulations)), np.ones(len(observations))])

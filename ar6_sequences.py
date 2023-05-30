@@ -14,6 +14,12 @@ import multiprocessing as mp  # Breaks Spyder profilers, and hit RAM on T480s 8G
 
 from ar6_trajectories import get_trajectories
 
+from log_config import setup_logger
+
+setup_logger()
+logger = logging.getLogger(__name__)
+
+
 FILENAME_CLEAN = "ar6_sequences.pkl"
 
 var_map = {
@@ -98,13 +104,13 @@ def sequences(n_samples=None):
 
 try:
     df_sequences = pd.read_pickle(FILENAME_CLEAN)
-    logging.info("Success read  file", FILENAME_CLEAN)
+    logging.info(f"Success read  file {FILENAME_CLEAN} ")
 except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-    logging.info("Unable to access ", FILENAME_CLEAN, ":", e_read, ".")
+    logging.info(f"Unable to access {FILENAME_CLEAN} : {e_read}")
     logging.info("Attempting to create it.")
     try:
         df_sequences = sequences()
         df_sequences.to_pickle(FILENAME_CLEAN)
         logging.info("Cleaned OWID trajectories saved successfully!")
     except Exception as e:
-        logging.error("An error occurred while saving the OWID trajectories:", e)
+        logging.error(f"An error occurred while saving the OWID trajectories: {e}")

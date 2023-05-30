@@ -22,6 +22,11 @@ import logging
 import pickle
 import pandas as pd
 
+from log_config import setup_logger
+
+setup_logger()
+logger = logging.getLogger(__name__)
+
 FILENAME_RAW = "AR6_Scenarios_Database_ISO3_v1.1.csv"
 FILENAME_CLEAN = "ar6_trajectories.pkl"
 
@@ -140,18 +145,20 @@ def _clean(df):
 def get_trajectories():
     try:
         df_trajectories = pd.read_pickle(FILENAME_CLEAN)
-        logging.info("   Success read file", FILENAME_CLEAN)
+        logging.info(f"   Success read file {FILENAME_CLEAN}")
         return df_trajectories
     except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-        logging.info("   Unable to fetch ", FILENAME_CLEAN, ":", e_read, ".")
-        logging.info("   Attempting now to create it.")
+        logging.info(f"Unable to fetch {FILENAME_CLEAN} : {e_read} .")
+        logging.info("Attempting now to create it.")
     try:
         df_trajectories = _clean(_get_dataframe())
         df_trajectories.to_pickle(FILENAME_CLEAN)
-        logging.info("   Saved cleaned AR6 trajectories!")
+        logging.info("Saved cleaned AR6 trajectories!")
         return df_trajectories
     except Exception as e_write:
-        logging.error("   An error occurred while saving the AR6 trajectories:", e_write)
+        logging.error(
+            f"   An error occurred while saving the AR6 trajectories: {e_write} "
+        )
     return None
 
 
