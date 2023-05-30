@@ -47,8 +47,6 @@ def model_mlp(input_dim, n1=224, d1=0.3, n2=64, d2=0.1, n3=1, d3=0):
     return model
 
 
-
-
 # %% Example
 
 
