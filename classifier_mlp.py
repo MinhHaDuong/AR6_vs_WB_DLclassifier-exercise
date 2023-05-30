@@ -36,9 +36,6 @@ def model_mlp(input_dim, n1=224, d1=0.3, n2=64, d2=0.1, n3=1, d3=0):
         loss="binary_crossentropy",
         optimizer=Adam(learning_rate=0.01),
         metrics=[
-            "accuracy",
-            metrics.Precision(name="precision"),
-            metrics.Recall(name="recall"),
             metrics.AUC(name="auc"),
             tfa.metrics.F1Score(name="f1_score", num_classes=1, threshold=0.5),
         ],
