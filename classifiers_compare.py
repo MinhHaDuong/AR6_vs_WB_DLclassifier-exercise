@@ -1,27 +1,18 @@
-""" Compare different machine learning algorithms to recognize simulations
+""" Functions to compare different machine learning classifiers and prettyprint result
 Created on Mon May 29 17:24:47 2023
 
 @author: haduong@centre-cired.fr
 """
 
+import datetime
 import pandas as pd
 
 from time import time, process_time
-import datetime
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 from keras.callbacks import EarlyStopping
 from keras.models import Sequential
 
-from sklearn.preprocessing import StandardScaler
-from imblearn.over_sampling import SMOTE
-
 from joblib import Parallel, delayed
-
-from data import get_sets, all_vars
-from classifier_others import model_dummy, model_lr, model_rf, model_svm, model_xgb
-from classifier_mlp import model_mlp
-
-# %%
 
 
 def train_and_evaluate(model, x_train, x_test, y_train, y_test):
@@ -81,10 +72,7 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
     return train_t, predict_t, tp, tn, fp, fn, auc, f1, precision, recall, model
 
 
-# %%
-
-
-def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=False):
+def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
     print("\nComparing classification models.")
     result = pd.DataFrame(
         columns=[
@@ -128,144 +116,20 @@ def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=False):
     return result, duration
 
 
-# %% Run the comparison
-
-x_train, x_test, y_train, y_test = get_sets(all_vars, as_change=True)
-
-models_dict = {
-    "Dummy baseline": model_dummy,
-    "Logistic regression": model_lr,
-    "Support vector machine": model_svm,
-    "Random forest": model_rf,
-    "Gradient boosting machine": model_xgb,
-    "Multilayer perceptron 224/0.3/64/0.1": model_mlp(x_train.shape[1]),
-    "Multilayer perceptron bis": model_mlp(x_train.shape[1]),
-    "Multilayer perceptron ter": model_mlp(x_train.shape[1]),
-    "Multilayer perceptron 256/0.3/128/0.2/64/0.1": model_mlp(
-        x_train.shape[1], 256, 0.3, 128, 0.2, 64, 0.1
-    ),
-    "Multilayer perceptron 256/0/128/0": model_mlp(x_train.shape[1], 256, 0, 128, 0),
-    "Multilayer perceptron 256/0/128/0/64/0": model_mlp(
-        x_train.shape[1], 256, 0, 128, 0, 64, 0
-    ),
-    "Multilayer perceptron 128/0/32/0.1": model_mlp(x_train.shape[1], 128, 0, 32, 0.1),
-    "Multilayer perceptron 128/0/32/0": model_mlp(x_train.shape[1], 128, 0, 32, 0),
-    "Multilayer perceptron 64/0.3/16/0.1/8/0": model_mlp(
-        x_train.shape[1], 64, 0.3, 16, 0.1, 8, 0
-    ),
-    "Multilayer perceptron 64/0/16/0.1/8/0": model_mlp(
-        x_train.shape[1], 64, 0, 16, 0.1, 8, 0
-    ),
-    "Multilayer perceptron 64/0/32/0/16/0": model_mlp(
-        x_train.shape[1], 64, 0, 32, 0, 16, 0
-    ),
-    "Multilayer perceptron 32/0/16/0/8/0": model_mlp(
-        x_train.shape[1], 32, 0, 16, 0, 8, 0
-    ),
-}
-
-
-results = pd.DataFrame(columns=["result", "duration"])
-
-results.loc["unscaled"] = compare(
-    models_dict, x_train, x_test, y_train, y_test, parallelize=False
-)
-results.loc["parallel_unscaled"] = compare(
-    models_dict, x_train, x_test, y_train, y_test, parallelize=True
-)
-
-scaler = StandardScaler()
-x_train_scaled = scaler.fit_transform(x_train)
-x_test_scaled = scaler.transform(x_test)
-
-results.loc["scaled"] = compare(
-    models_dict, x_train_scaled, x_test_scaled, y_train, y_test, parallelize=False
-)
-results.loc["parallel_scaled"] = compare(
-    models_dict, x_train_scaled, x_test_scaled, y_train, y_test, parallelize=True
-)
-
-# Resampled includes scaled
-smote = SMOTE(random_state=0)
-x_train_scaled_resampled, y_train_resampled = smote.fit_resample(
-    x_train_scaled, y_train
-)
-
-results.loc["resampled"] = compare(
-    models_dict,
-    x_train_scaled_resampled,
-    x_test_scaled,
-    y_train_resampled,
-    y_test,
-    parallelize=False,
-)
-results.loc["parallel_resampled"] = compare(
-    models_dict,
-    x_train_scaled_resampled,
-    x_test_scaled,
-    y_train_resampled,
-    y_test,
-    parallelize=True,
-)
-
-
-# %% Print and save the profiled results
-
-pd.set_option("display.max_columns", None)
-pd.set_option("display.width", 10000)
-
-table_unscaled = results.loc["unscaled", "result"][
-    results.loc["unscaled", "result"].columns[:-1]
-].round(3)
-table_parallel_unscaled = results.loc["parallel_unscaled", "result"][
-    results.loc["parallel_unscaled", "result"].columns[:-1]
-].round(3)
-
-table_scaled = results.loc["scaled", "result"][
-    results.loc["scaled", "result"].columns[:-1]
-].round(3)
-table_parallel_scaled = results.loc["parallel_scaled", "result"][
-    results.loc["parallel_scaled", "result"].columns[:-1]
-].round(3)
-
-table_resampled = results.loc["resampled", "result"][
-    results.loc["resampled", "result"].columns[:-1]
-].round(3)
-table_parallel_resampled = results.loc["parallel_resampled", "result"][
-    results.loc["parallel_resampled", "result"].columns[:-1]
-].round(3)
-
-
-def message(formatter, **kwargs):
-    return f"""
-    Performance of different classifiers on the owid vs. ar6 dataset
+def format_table(results, key, formatter, **kwargs):
+    table = results.loc[key, "result"][results.loc[key, "result"].columns[:-5]].round(3)
+    duration = results.loc[key, "duration"]
     
-    Author: haduong@centre-cired.fr
-    Run saved: {datetime.datetime.now()}
+    formatted_table = getattr(table, formatter)(**kwargs)
     
-    Unscaled (Duration: {results.loc['unscaled', 'duration']} seconds):
-    {getattr(table_unscaled, formatter)(**kwargs)}
-    
-    Parallel Unscaled (Duration: {results.loc['parallel_unscaled', 'duration']} seconds):
-    {getattr(table_parallel_unscaled, formatter)(**kwargs)}
-    
-    Scaled (Duration: {results.loc['scaled', 'duration']} seconds):
-    {getattr(table_scaled, formatter)(**kwargs)}
-    
-    Parallel Scaled (Duration: {results.loc['parallel_scaled', 'duration']} seconds):
-    {getattr(table_parallel_scaled, formatter)(**kwargs)}
-    
-    Resampled Scaled (Duration: {results.loc['resampled', 'duration']} seconds):
-    {getattr(table_resampled, formatter)(**kwargs)}
-    
-    Parallel Resampled Scaled (Duration: {results.loc['parallel_resampled', 'duration']} seconds):
-    {getattr(table_parallel_resampled, formatter)(**kwargs)}
-    """
+    return f"\n{key.capitalize()} (Duration: {duration} seconds):\n" + f"{formatted_table}\n"
 
 
-print(message("to_string"))
+def pretty_print(results, keys, formatter, **kwargs):
+    message = "Performance of different classifiers on the owid vs. ar6 dataset\n"
+    message += "Author: haduong@centre-cired.fr\n"
+    message += f"Run saved: {datetime.datetime.now()}\n"
 
-with open("classifiers_compare.txt", "w", encoding="utf-8") as f:
-    print(message("to_csv", sep="\t"), file=f)
-
-results.to_pickle("classifiers_compare.pkl")
+    for key in keys:
+        message += format_table(results, key, formatter, **kwargs)
+    return message
