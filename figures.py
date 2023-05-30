@@ -9,6 +9,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 
+from functools import lru_cache
+
 from data import get_data, dif, flat, all_vars
 
 # Load the data
@@ -120,7 +122,8 @@ def residuals(data):
     return data - y_full_range
 
 
-def compute_data(var):
+@lru_cache(maxsize=None)  # Unbounded cache size
+def compute_data(var, subsample_obs=3, subsample_sim=5):
     data = DATA[var]
     data_dif = DATA_DIFF[var]
     data_dif2 = DATA_DIFF2[var]
@@ -130,13 +133,12 @@ def compute_data(var):
     num_sim = int(len(labels) - num_obs)
 
     # Subsampling one of 5 or 3 sequence
-    data_sim = data[0:num_sim][::5, :]
-    data_obs = data[num_sim:][::3, :]
-
-    data_sim_dif = data_dif[0:num_sim][::5, :]
-    data_obs_dif = data_dif[num_sim:][::3, :]
-    data_sim_dif2 = data_dif2[0:num_sim][::5, :]
-    data_obs_dif2 = data_dif2[num_sim:][::3, :]
+    data_sim = data[0:num_sim][::subsample_sim, :]
+    data_obs = data[num_sim:][::subsample_obs, :]
+    data_sim_dif = data_dif[0:num_sim][::subsample_sim, :]
+    data_obs_dif = data_dif[num_sim:][::subsample_obs, :]
+    data_sim_dif2 = data_dif2[0:num_sim][::subsample_sim, :]
+    data_obs_dif2 = data_dif2[num_sim:][::subsample_obs, :]
 
     data_sim_residuals = pd.DataFrame(map(residuals, data_sim))
     data_obs_residuals = pd.DataFrame(map(residuals, data_obs))
@@ -257,3 +259,65 @@ fig_scatter3d([100], "fig3_3D")
 # %% Finetuning the viewpoint
 
 # fig_scatter3d(range(90, 180, 10))
+
+# %% Compare the CDFs
+
+
+def plot_cdf(ax, data_obs, data_sim, var, x_label):
+    """
+    Plot the cumulative distribution function (CDF) for observed and simulated data.
+
+    Parameters:
+        ax (matplotlib.axes.Axes): The matplotlib Axes object to draw the plot on.
+        data_obs (pandas.DataFrame): The observed data as a pandas DataFrame.
+        data_sim (pandas.DataFrame): The simulated data as a pandas DataFrame.
+        var (str): The variable name to be displayed in the plot legend.
+        x_label (str): The column name in the data frames to be used as the x-axis values.
+
+    Returns:
+        None
+
+    Warning: the CDF are not directly comparable because observations and simulation
+    data were build by pooling from different sources ->
+    Simulation data is biased towards large countries.
+    """
+    data_obs_sorted = np.sort(data_obs[x_label])
+    data_sim_sorted = np.sort(data_sim[x_label])
+
+    p_obs = 1.0 * np.arange(len(data_obs[x_label])) / (len(data_obs[x_label]) - 1)
+    p_sim = 1.0 * np.arange(len(data_sim[x_label])) / (len(data_sim[x_label]) - 1)
+
+    ax.plot(data_obs_sorted, p_obs, color="blue", alpha=0.5, label="observations")
+    ax.plot(data_sim_sorted, p_sim, color="red", alpha=0.5, label="simulations")
+
+    ax.set_ylabel("Cumulative Density")
+    ax.legend(title=f"{var} {x_label.capitalize()}", loc="lower right")
+
+
+def steps(axs, var):
+    df_obs, df_sim = compute_data(var, subsample_obs=1, subsample_sim=1)
+    plot_cdf(axs[0], df_obs, df_sim, var, "location")
+    plot_cdf(axs[1], df_obs, df_sim, var, "trend")
+    plot_cdf(axs[2], df_obs, df_sim, var, "variability")
+    plot_cdf(axs[3], df_obs, df_sim, var, "acceleration")
+
+
+def fig_cdf(filename=None):
+    fig, axs = plt.subplots(4, 4, figsize=(18, 18))
+    steps(axs[0, :], "co2")
+    steps(axs[1, :], "pop")
+    steps(axs[2, :], "gdp")
+    steps(axs[3, :], "tpec")
+    fig.suptitle(
+        "Warning: The simulated data may be skewed towards larger countries compared to the observed data.",
+        fontsize=16,
+    )
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.95)
+    if filename:
+        plt.savefig(filename)
+    else:
+        plt.show()
+
+
+fig_cdf("fig4_cdf")
