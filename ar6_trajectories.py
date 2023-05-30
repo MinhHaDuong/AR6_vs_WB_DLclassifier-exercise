@@ -18,6 +18,7 @@ Created on Thu Apr 28 2023
 @author: haduong@centre-cired.fr
 """
 
+import logging
 import pickle
 import pandas as pd
 
@@ -139,18 +140,18 @@ def _clean(df):
 def get_trajectories():
     try:
         df_trajectories = pd.read_pickle(FILENAME_CLEAN)
-        print("   Success read file", FILENAME_CLEAN)
+        logging.info("   Success read file", FILENAME_CLEAN)
         return df_trajectories
     except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-        print("   Unable to fetch ", FILENAME_CLEAN, ":", e_read, ".")
-        print("   Attempting now to create it.")
+        logging.info("   Unable to fetch ", FILENAME_CLEAN, ":", e_read, ".")
+        logging.info("   Attempting now to create it.")
     try:
         df_trajectories = _clean(_get_dataframe())
         df_trajectories.to_pickle(FILENAME_CLEAN)
-        print("   Saved cleaned AR6 trajectories!")
+        logging.info("   Saved cleaned AR6 trajectories!")
         return df_trajectories
     except Exception as e_write:
-        print("   An error occurred while saving the AR6 trajectories:", e_write)
+        logging.error("   An error occurred while saving the AR6 trajectories:", e_write)
     return None
 
 

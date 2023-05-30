@@ -7,6 +7,7 @@ Created on Tue May 23 12:57:57 2023
 @author: haduong@centre-cired.fr
 """
 
+import logging
 import pickle
 import pandas as pd
 import multiprocessing as mp  # Breaks Spyder profilers, and hit RAM on T480s 8Gb
@@ -65,7 +66,7 @@ def _shake(df):
     result = result.reset_index()
     result.set_index(["Model", "Scenario", "Region", "Year", "Variable"], inplace=True)
     result.sort_index(inplace=True)
-    print(result)
+    logging.info(result)
 
     # Cleanup trajectories with NaNs and zeros
     result = result.dropna()
@@ -97,13 +98,13 @@ def sequences(n_samples=None):
 
 try:
     df_sequences = pd.read_pickle(FILENAME_CLEAN)
-    print("Success read  file", FILENAME_CLEAN)
+    logging.info("Success read  file", FILENAME_CLEAN)
 except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-    print("Unable to access ", FILENAME_CLEAN, ":", e_read, ".")
-    print("Attempting to create it.")
+    logging.info("Unable to access ", FILENAME_CLEAN, ":", e_read, ".")
+    logging.info("Attempting to create it.")
     try:
         df_sequences = sequences()
         df_sequences.to_pickle(FILENAME_CLEAN)
-        print("Cleaned OWID trajectories saved successfully!")
+        logging.info("Cleaned OWID trajectories saved successfully!")
     except Exception as e:
-        print("An error occurred while saving the OWID trajectories:", e)
+        logging.error("An error occurred while saving the OWID trajectories:", e)

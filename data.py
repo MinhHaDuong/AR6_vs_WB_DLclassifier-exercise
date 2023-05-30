@@ -4,6 +4,8 @@ Created on Tue May  9 19:43:16 2023
 @author: haduong@centre-cired.fr
 """
 
+import logging
+
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -89,7 +91,7 @@ def get_data(var=None, as_change=None, flatten=True):
         ["Model", "Scenario", "countrycode", "year"],
     )
 
-    print(
+    logging.info(
         f"{var}\tobservations:\t{len(observations)}\tsimulations:\t{len(simulations)}"
     )
 
