@@ -5,6 +5,7 @@ Created on Mon May 29 17:24:47 2023
 """
 
 import datetime
+import logging
 import pandas as pd
 
 from time import time, process_time
@@ -24,7 +25,7 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
     start = process_time()
 
     if is_keras_model:
-        print("Training Keras model.")
+        logging.info("Training Keras model.")
         early_stopping = EarlyStopping(
             monitor="val_loss", patience=3, verbose=1, restore_best_weights=True
         )
@@ -37,12 +38,12 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
             callbacks=[early_stopping],
         )
     else:
-        print("Fitting, ", end="")
+        logging.info("Fitting ML classifier model, ", end="")
         model.fit(x_train, y_train)
 
     train_t = process_time() - start
 
-    print("Predicting, ", end="")
+    logging.info("Making predictions.")
     start = process_time()
 
     y_pred = model.predict(x_test)
@@ -51,7 +52,7 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
         y_pred = (y_pred_continuous > 0.5).astype(int)
     predict_t = process_time() - start
 
-    print("Scoring.")
+    logging.info("Computing evaluation metrics.")
     cm = confusion_matrix(y_test, y_pred)
     tp = cm[1, 1]  # True positives
     tn = cm[0, 0]  # True negatives
@@ -73,7 +74,7 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
 
 
 def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
-    print("\nComparing classification models.")
+    logging.info("Comparing classification models.")
     result = pd.DataFrame(
         columns=[
             "Train",
@@ -96,7 +97,7 @@ def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
     if parallelize:
 
         def process_model(label, model):
-            print(label, end=":   ")
+            logging.info(label)
             values = train_and_evaluate(model, x_train, x_test, y_train, y_test)
             return label, values
 
@@ -108,7 +109,7 @@ def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
             result.loc[label] = values
     else:
         for label, model in models_dict.items():
-            print(label, end=":   ")
+            logging.info(label)
             values = train_and_evaluate(model, x_train, x_test, y_train, y_test)
             result.loc[label] = values
 
