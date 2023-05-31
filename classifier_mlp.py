@@ -4,6 +4,8 @@ Created on Tue May  9 21:02:33 2023
 @author: haduong@centre-cired.fr
 """
 
+import logging
+
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.callbacks import EarlyStopping
@@ -18,11 +20,15 @@ from sklearn.metrics import classification_report
 
 from data import get_sets
 
+from log_config import setup_logger
+
+setup_logger()
+logger = logging.getLogger(__name__)
 
 # Multilayers perceptron
 
 
-def model_mlp(input_dim, n1=64, d1=0.1, n2=32, d2=0.1, n3=16, d3=0):
+def model_mlp(input_dim, n1=32, d1=0.05, n2=32, d2=0.05, n3=32, d3=0.05):
     model = Sequential()
     model.add(Dense(n1, activation="relu", input_dim=input_dim))
     model.add(Dropout(d1))
@@ -82,7 +88,9 @@ def test_model(model, x_test, y_test):
 
 
 def define_train_test():
-    x_train, x_test, y_train, y_test = get_sets()
+    x_train, x_test, y_train, y_test = get_sets(
+        diff=False, normalize=True, rebalance=True
+    )
     model = model_mlp(x_train.shape[1])
     model = train_model(model, x_train, y_train, x_test, y_test)
     score = test_model(model, x_test, y_test)
@@ -142,7 +150,9 @@ def model_mlp_tunable(hp, input_dimension):
 
 
 def tune_mlp():
-    x_train, x_test, y_train, y_test = get_sets()
+    x_train, x_test, y_train, y_test = get_sets(
+        diff=True, normalize=True, rebalance=True
+    )
 
     tuner = RandomSearch(
         lambda hp: model_mlp_tunable(hp, x_train.shape[1]),
