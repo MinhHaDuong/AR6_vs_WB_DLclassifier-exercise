@@ -6,95 +6,54 @@ Created on Tue May 30 12:42:04 2023
 
 import pandas as pd
 
-from sklearn.preprocessing import StandardScaler
-from imblearn.over_sampling import SMOTE
-
 from classifier_others import model_dummy, model_lr, model_rf, model_svm, model_xgb
 from classifier_mlp import model_mlp
 from classifiers_compare import compare, pretty_print
 
-from data import get_sets, all_vars
+from data import get_sets
 
 
-# %% Run the comparison
+# %% Run the comparison.
+# Compare our default with the top four architectures from the model tuner
 
-x_train, x_test, y_train, y_test = get_sets(all_vars, as_change=True)
-
+x_train, _, _, _ = get_sets(diff=True)
+dim = x_train.shape[1]
 models_dict = {
     "Dummy baseline": model_dummy,
     "Logistic regression": model_lr,
     "Support vector machine": model_svm,
     "Random forest": model_rf,
     "Gradient boosting machine": model_xgb,
-    "Multilayer perceptron 224/0.3/64/0.1": model_mlp(x_train.shape[1]),
-    "Multilayer perceptron bis": model_mlp(x_train.shape[1]),
-    "Multilayer perceptron ter": model_mlp(x_train.shape[1]),
-    "Multilayer perceptron 256/0.3/128/0.2/64/0.1": model_mlp(
-        x_train.shape[1], 256, 0.3, 128, 0.2, 64, 0.1
-    ),
-    "Multilayer perceptron 256/0/128/0": model_mlp(x_train.shape[1], 256, 0, 128, 0),
-    "Multilayer perceptron 256/0/128/0/64/0": model_mlp(
-        x_train.shape[1], 256, 0, 128, 0, 64, 0
-    ),
-    "Multilayer perceptron 128/0/32/0.1": model_mlp(x_train.shape[1], 128, 0, 32, 0.1),
-    "Multilayer perceptron 128/0/32/0": model_mlp(x_train.shape[1], 128, 0, 32, 0),
-    "Multilayer perceptron 64/0.3/16/0.1/8/0": model_mlp(
-        x_train.shape[1], 64, 0.3, 16, 0.1, 8, 0
-    ),
-    "Multilayer perceptron 64/0/16/0.1/8/0": model_mlp(
-        x_train.shape[1], 64, 0, 16, 0.1, 8, 0
-    ),
-    "Multilayer perceptron 64/0/32/0/16/0": model_mlp(
-        x_train.shape[1], 64, 0, 32, 0, 16, 0
-    ),
-    "Multilayer perceptron 32/0/16/0/8/0": model_mlp(
-        x_train.shape[1], 32, 0, 16, 0, 8, 0
+    "Multilayer perceptron default": model_mlp(dim),
+    "Multilayer perceptron bis": model_mlp(dim),
+    "Multilayer perceptron ter": model_mlp(dim),
+    "Multilayer perceptron 128/0/48/0.1/16/0": model_mlp(dim, 128, 0, 48, 0.1, 16, 0),
+    "Multilayer perceptron 96/0/48/0.2/8/0.2": model_mlp(dim, 96, 0, 48, 0.2, 8, 0.2),
+    "Multilayer perceptron 64/0/32/0/32/0.1": model_mlp(dim, 64, 0, 32, 0, 32, 0.1),
+    "Multilayer perceptron 32/0.1/32/0.1/32/0.2": model_mlp(
+        dim, 32, 0.1, 32, 0.1, 32, 0.2
     ),
 }
 
-
 results = pd.DataFrame(columns=["result", "duration"])
 
-results.loc["unscaled"] = compare(
-    models_dict, x_train, x_test, y_train, y_test, parallelize=False
-)
-results.loc["parallel_unscaled"] = compare(
-    models_dict, x_train, x_test, y_train, y_test, parallelize=True
-)
 
-scaler = StandardScaler()
-x_train_scaled = scaler.fit_transform(x_train)
-x_test_scaled = scaler.transform(x_test)
+def run(case, normalize, rebalance):
+    x_train, x_test, y_train, y_test = get_sets(
+        diff=True, normalize=normalize, rebalance=rebalance
+    )
+    results.loc[case] = compare(
+        models_dict, x_train, x_test, y_train, y_test, parallelize=False
+    )
+    results.loc["parallel " + case] = compare(
+        models_dict, x_train, x_test, y_train, y_test, parallelize=True
+    )
 
-results.loc["scaled"] = compare(
-    models_dict, x_train_scaled, x_test_scaled, y_train, y_test, parallelize=False
-)
-results.loc["parallel_scaled"] = compare(
-    models_dict, x_train_scaled, x_test_scaled, y_train, y_test, parallelize=True
-)
 
-# Resampled includes scaled
-smote = SMOTE(random_state=0)
-x_train_scaled_resampled, y_train_resampled = smote.fit_resample(
-    x_train_scaled, y_train
-)
-
-results.loc["resampled"] = compare(
-    models_dict,
-    x_train_scaled_resampled,
-    x_test_scaled,
-    y_train_resampled,
-    y_test,
-    parallelize=False,
-)
-results.loc["parallel_resampled"] = compare(
-    models_dict,
-    x_train_scaled_resampled,
-    x_test_scaled,
-    y_train_resampled,
-    y_test,
-    parallelize=True,
-)
+run("raw", False, False)
+run("normalized", True, False)
+run("balanced", False, True)
+run("base", True, True)
 
 
 # %% Print and save the profiled results
@@ -103,12 +62,14 @@ pd.set_option("display.max_columns", None)
 pd.set_option("display.width", 10000)
 
 keys = [
-    "unscaled",
-    "parallel_unscaled",
-    "scaled",
-    "parallel_scaled",
-    "resampled",
-    "parallel_resampled",
+    "raw",
+    "parallel raw",
+    "normalized",
+    "parallel normalized",
+    "balanced",
+    "parallel balanced",
+    "base",
+    "parallel base",
 ]
 
 print(pretty_print(results, keys, "to_string"))
