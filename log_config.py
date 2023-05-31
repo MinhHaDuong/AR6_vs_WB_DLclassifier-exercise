@@ -1,5 +1,7 @@
 # log_config.py
+
 import logging
+import warnings
 
 
 def setup_logger():
@@ -26,3 +28,8 @@ def setup_logger():
     fh.setLevel(logging.INFO)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+
+
+warnings.filterwarnings(
+    "ignore", category=UserWarning, module="tensorflow_addons.utils.tfa_eol_msg"
+)

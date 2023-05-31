@@ -16,7 +16,6 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 
 from sklearn.decomposition import PCA
-from umap import UMAP
 
 from classifier_others import model_dummy, model_xgb
 from classifier_mlp import model_mlp
@@ -28,9 +27,11 @@ from log_config import setup_logger
 setup_logger()
 logger = logging.getLogger(__name__)
 
+NEWDIM = 15
+
 
 # Function for PCA dimensionality reduction
-def perform_pca(x_raw_train, x_raw_test, n_components=15):
+def perform_pca(x_raw_train, x_raw_test, n_components=NEWDIM):
     logging.info(
         f"Performing PCA dimensionality reduction to {n_components} components."
     )
@@ -40,29 +41,21 @@ def perform_pca(x_raw_train, x_raw_test, n_components=15):
     return x_pca_train, x_pca_test
 
 
-# Function for UMAP dimensionality reduction
-def perform_umap(x_raw_train, x_raw_test, n_components=2, n_neighbors=15, min_dist=0.1):
-    logging.info(
-        f"Performing UMAP dimensionality reduction to {n_components} components."
-    )
-    umap = UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist)
-    x_umap_train = umap.fit_transform(x_raw_train)
-    x_umap_test = umap.transform(x_raw_test)
-    return x_umap_train, x_umap_test
-
-
 # Function for autoencoder dimensionality reduction
 def perform_autoencode(
-    x_raw_train, x_raw_test, latent_dim=15, epochs=50, batch_size=32
+    x_raw_train, x_raw_test, latent_dim=NEWDIM, epochs=50, batch_size=32, n=1
 ):
     logging.info(f"Training an autoencoder to a {latent_dim} dimensions latent space.")
-    # Create and train the autoencoder
     autoencoder = Sequential()
-    autoencoder.add(Dense(64, activation="relu", input_shape=(x_raw_train.shape[1],)))
-    autoencoder.add(Dense(32, activation="relu", input_shape=(x_raw_train.shape[1],)))
-    autoencoder.add(Dense(latent_dim, activation="relu"))
-    autoencoder.add(Dense(32, activation="relu"))
-    autoencoder.add(Dense(x_raw_train.shape[1], activation="sigmoid"))
+    autoencoder.add(Dense(20, activation="relu", input_shape=(x_raw_train.shape[1],)))
+    if n == 2:
+        autoencoder.add(Dense(20, activation="relu"))
+    autoencoder.add(Dense(latent_dim, activation="linear"))
+    autoencoder.add(Dense(20, activation="relu"))
+    if n == 2:
+        autoencoder.add(Dense(20, activation="relu"))
+    autoencoder.add(Dense(x_raw_train.shape[1], activation="linear"))
+
     autoencoder.compile(optimizer="adam", loss="mse")
     autoencoder.fit(x_raw_train, x_raw_train, epochs=epochs, batch_size=batch_size)
 
@@ -80,73 +73,52 @@ results = pd.DataFrame(columns=["result", "duration"])
 
 x_raw_train, x_raw_test, y_train, y_test = get_sets(all_vars, as_change=True)
 
-models_dict = {
-    "Dummy baseline": model_dummy,
-    "Gradient boosting machine": model_xgb,
-    "Multilayer perceptron": model_mlp(
-        x_raw_train.shape[1], 64, 0, 32, 0, 16, 0
-    ),
-    "bis": model_mlp(x_raw_train.shape[1], 64, 0, 32, 0, 16, 0),
-    "ter": model_mlp(x_raw_train.shape[1], 64, 0, 32, 0, 16, 0),
-}
 
-results.loc["raw"] = compare(
-    models_dict, x_raw_train, x_raw_test, y_train, y_test, parallelize=True
-)
+def models_dict(input_dim=x_raw_train.shape[1]):
+    return {
+        "Dummy baseline": model_dummy,
+        "Gradient boosting machine": model_xgb,
+        "Multilayer perceptron": model_mlp(input_dim),
+        "bis": model_mlp(input_dim),
+        "ter": model_mlp(input_dim),
+    }
+
 
 scaler = StandardScaler()
 x_train_scaled = scaler.fit_transform(x_raw_train)
 x_test_scaled = scaler.transform(x_raw_test)
-
 smote = SMOTE(random_state=0)
-x_train_scaled_resampled, y_train_resampled = smote.fit_resample(
-    x_train_scaled, y_train
-)
+x_base_train, y_base_train = smote.fit_resample(x_train_scaled, y_train)
 
 results.loc["normalized"] = compare(
-    models_dict,
-    x_train_scaled_resampled,
-    x_test_scaled,
-    y_train_resampled,
-    y_test,
-    parallelize=True,
+    models_dict(), x_base_train, x_test_scaled, y_base_train, y_test
 )
 
-x_pca_train, x_pca_test = perform_pca(x_train_scaled_resampled, x_test_scaled)
-models_dict["Multilayer perceptron"] = model_mlp(
-    x_pca_train.shape[1], 64, 0, 32, 0, 16, 0
-)
-models_dict["bis"] = model_mlp(x_pca_train.shape[1], 64, 0, 32, 0, 16, 0)
-models_dict["ter"] = model_mlp(x_pca_train.shape[1], 64, 0, 32, 0, 16, 0)
+x_pca_train, x_pca_test = perform_pca(x_base_train, x_test_scaled)
+assert x_pca_train.shape[1] == NEWDIM
 results.loc["PCA"] = compare(
-    models_dict, x_pca_train, x_pca_test, y_train_resampled, y_test, parallelize=False
+    models_dict(x_pca_train.shape[1]), x_pca_train, x_pca_test, y_base_train, y_test
 )
 
-x_umap_train, x_umap_test = perform_umap(x_train_scaled_resampled, x_test_scaled)
-models_dict["Multilayer perceptron"] = model_mlp(
-    x_umap_train.shape[1], 64, 0, 32, 0, 16, 0
-)
-models_dict["bis"] = model_mlp(x_umap_train.shape[1], 64, 0, 32, 0, 16, 0)
-models_dict["ter"] = model_mlp(x_umap_train.shape[1], 64, 0, 32, 0, 16, 0)
-results.loc["UMAP"] = compare(
-    models_dict, x_umap_train, x_umap_test, y_train_resampled, y_test, parallelize=False
-)
 
-x_latent_train, x_latent_test = perform_autoencode(
-    x_train_scaled_resampled, x_test_scaled
-)
-models_dict["Multilayer perceptron"] = model_mlp(
-    x_latent_train.shape[1], 64, 0, 32, 0, 16, 0
-)
-models_dict["bis"] = model_mlp(x_latent_train.shape[1], 64, 0, 32, 0, 16, 0)
-models_dict["ter"] = model_mlp(x_latent_train.shape[1], 64, 0, 32, 0, 16, 0)
+x_latent_train, x_latent_test = perform_autoencode(x_base_train, x_test_scaled)
+assert x_latent_train.shape[1] == NEWDIM
 results.loc["latent"] = compare(
-    models_dict,
+    models_dict(x_latent_train.shape[1]),
     x_latent_train,
     x_latent_test,
-    y_train_resampled,
+    y_base_train,
     y_test,
-    parallelize=False,
+)
+
+x_latent_train, x_latent_test = perform_autoencode(x_base_train, x_test_scaled, n=2)
+assert x_latent_train.shape[1] == NEWDIM
+results.loc["latent2"] = compare(
+    models_dict(x_latent_train.shape[1]),
+    x_latent_train,
+    x_latent_test,
+    y_base_train,
+    y_test,
 )
 
 # %% Print and save the results
@@ -154,7 +126,7 @@ results.loc["latent"] = compare(
 pd.set_option("display.max_columns", None)
 pd.set_option("display.width", 10000)
 
-keys = ["raw", "normalized", "PCA", "UMAP", "latent"]
+keys = ["normalized", "PCA", "latent", "latent2"]
 
 print(pretty_print(results, keys, "to_string"))
 
