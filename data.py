@@ -19,7 +19,7 @@ setup_logger()
 logger = logging.getLogger(__name__)
 
 
-all_vars = ["co2", "gdp", "pop", "tpec"] 
+all_vars = ["co2", "gdp", "pop", "tpec"]
 
 
 def dif(arrays):
