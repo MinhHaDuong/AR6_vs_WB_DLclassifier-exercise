@@ -19,17 +19,7 @@ setup_logger()
 logger = logging.getLogger(__name__)
 
 
-# Source ourworldindata.org
-world_1990 = pd.Series(
-    {
-        "co2": 27630,  # Mt CO2/yr
-        "gdp": 35850,  # billion US$2010/yr
-        "pop": 5320,  # million people
-        "tpec": 343.9,  # EJ/yr, 95527 TWh
-    }
-)
-
-all_vars = world_1990.index
+all_vars = ["co2", "gdp", "pop", "tpec"] 
 
 
 def dif(arrays):
@@ -44,8 +34,8 @@ def flat(array):
     return array.reshape(array.shape[0], -1)
 
 
-def sequence2array(df, indicators, units, group_keys):
-    """Return data array after applying the select function and adjusting units."""
+def sequence2array(df, indicators, group_keys):
+    """Return data array after applying the select function."""
 
     assert indicators, "Indicators must be a non-empty list."
     assert not df.empty, "DataFrame to select from must not be empty."
@@ -67,8 +57,6 @@ def sequence2array(df, indicators, units, group_keys):
         not subdf.empty
     ), "The result is empty. Match the list of indicators to observations data."
 
-    subdf = subdf.div(units, level="variable", axis=0)
-
     result = np.array([a for _, a in subdf.groupby(level=group_keys)])
     return result
 
@@ -87,12 +75,11 @@ def get_data(var=None, as_change=None, flatten=True):
     if isinstance(var, pd.Index):
         var = var.tolist()
 
-    observations = sequence2array(df_observations, var, world_1990, ["country", "year"])
+    observations = sequence2array(df_observations, var, ["country", "year"])
 
     simulations = sequence2array(
         df_simulations,
         var,
-        world_1990,
         ["Model", "Scenario", "countrycode", "year"],
     )
 

@@ -69,8 +69,6 @@ def compare_data(axs, var="pop", as_change=None, xlabel=None):
             ax.set_xlabel("5 years period")
         if as_change:
             ax.set_ylabel("Difference to next period")
-        else:
-            ax.set_ylabel("Fraction of world 1990")
 
         ax.set_title(titles[idx])
         ax.set_xticks(x.astype(int))
