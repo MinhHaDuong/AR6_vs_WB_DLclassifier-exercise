@@ -33,3 +33,8 @@ def setup_logger():
 warnings.filterwarnings(
     "ignore", category=UserWarning, module="tensorflow_addons.utils.tfa_eol_msg"
 )
+warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
+warnings.filterwarnings(
+    "ignore",
+    message="Could not find cuda drivers on your machine, GPU will not be used.",
+)
