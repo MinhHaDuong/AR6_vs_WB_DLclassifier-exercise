@@ -23,7 +23,9 @@ from data import get_sets
 
 
 def optimum(search):
-    x_train, x_test, y_train, y_test = get_sets()
+    x_train, x_test, y_train, y_test = get_sets(
+        diff=True, normalize=True, rebalance=True
+    )
     search.fit(x_train, y_train)
     best_model = search.best_estimator_
     print(best_model)
@@ -39,7 +41,7 @@ model_dummy = DummyClassifier()
 
 # %% Logistic regression classifier
 
-model_lr = LogisticRegression(solver="liblinear", random_state=42, C=1000, penalty="l2")
+model_lr = LogisticRegression(solver="liblinear", random_state=42, C=100, penalty="l2")
 
 
 def model_lr_tuned():
@@ -50,32 +52,6 @@ def model_lr_tuned():
     model = LogisticRegression(solver="liblinear", random_state=42)
     grid_search = GridSearchCV(model, param_grid, cv=5)
     best_model = optimum(grid_search)
-    return best_model
-
-
-# %% Random forest classifier
-
-model_rf = RandomForestClassifier(
-    bootstrap=False,
-    max_depth=30,
-    min_samples_leaf=1,
-    min_samples_split=3,
-    n_estimators=132,
-    random_state=42,
-)
-
-
-def model_rf_tuned():
-    param_dist = {
-        "n_estimators": randint(100, 500),
-        "max_depth": [None, 10, 20, 30],
-        "min_samples_split": randint(2, 10),
-        "min_samples_leaf": randint(1, 4),
-        "bootstrap": [True, False],
-    }
-    model = RandomForestClassifier(random_state=42)
-    random_search = RandomizedSearchCV(model, param_dist, cv=3, n_jobs=-1, verbose=2)
-    best_model = optimum(random_search)
     return best_model
 
 
@@ -99,6 +75,32 @@ def model_svm_tuned():
     model = svm.SVC(random_state=42)
     grid_search = GridSearchCV(model, param_grid, cv=5)
     best_model = optimum(grid_search)
+    return best_model
+
+
+# %% Random forest classifier
+
+model_rf = RandomForestClassifier(
+    bootstrap=False,
+    max_depth=30,
+    min_samples_leaf=1,
+    min_samples_split=2,
+    n_estimators=390,
+    random_state=42,
+)
+
+
+def model_rf_tuned():
+    param_dist = {
+        "n_estimators": randint(100, 500),
+        "max_depth": [None, 10, 20, 30],
+        "min_samples_split": randint(2, 10),
+        "min_samples_leaf": randint(1, 4),
+        "bootstrap": [True, False],
+    }
+    model = RandomForestClassifier(random_state=42)
+    random_search = RandomizedSearchCV(model, param_dist, cv=3, n_jobs=-1, verbose=2)
+    best_model = optimum(random_search)
     return best_model
 
 
