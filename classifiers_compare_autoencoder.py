@@ -53,14 +53,15 @@ def perform_umap(x_raw_train, x_raw_test, n_components=2, n_neighbors=15, min_di
 
 # Function for autoencoder dimensionality reduction
 def perform_autoencode(
-    x_raw_train, x_raw_test, latent_dim=15, epochs=100, batch_size=32
+    x_raw_train, x_raw_test, latent_dim=15, epochs=50, batch_size=32
 ):
     logging.info(f"Training an autoencoder to a {latent_dim} dimensions latent space.")
     # Create and train the autoencoder
     autoencoder = Sequential()
-    autoencoder.add(Dense(16, activation="relu", input_shape=(x_raw_train.shape[1],)))
+    autoencoder.add(Dense(64, activation="relu", input_shape=(x_raw_train.shape[1],)))
+    autoencoder.add(Dense(32, activation="relu", input_shape=(x_raw_train.shape[1],)))
     autoencoder.add(Dense(latent_dim, activation="relu"))
-    autoencoder.add(Dense(16, activation="relu"))
+    autoencoder.add(Dense(32, activation="relu"))
     autoencoder.add(Dense(x_raw_train.shape[1], activation="sigmoid"))
     autoencoder.compile(optimizer="adam", loss="mse")
     autoencoder.fit(x_raw_train, x_raw_train, epochs=epochs, batch_size=batch_size)
