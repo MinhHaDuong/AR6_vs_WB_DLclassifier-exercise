@@ -6,6 +6,7 @@ Created on Wed May 17 16:34:14 2023
 @author: haduong@centre-cired.fr
 """
 
+import logging
 import datetime
 import itertools
 import pandas as pd
@@ -17,7 +18,12 @@ from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 
+from log_config import setup_logger
+
 from data import get_sets, all_vars
+
+setup_logger()
+logger = logging.getLogger(__name__)
 
 # %%
 
@@ -61,9 +67,10 @@ def train_eval_powerset(model):
 
     for r in range(1, len(all_vars) + 1):
         for subset in itertools.combinations(all_vars, r):
+            key = str(subset).replace(",)", ")").replace("'", "")
+            logging.info(key)
             x_train, x_test, y_train, y_test = get_sets(subset, as_change=True)
             values = train_and_evaluate_model(model, x_train, y_train, x_test, y_test)
-            key = str(subset).replace(",)", ")").replace("'", "")
             result.loc[key] = values
 
     return result
@@ -86,6 +93,7 @@ model = xgb.XGBClassifier(**params)
 
 # %% Run the classifications
 
+logging.info("Run observation/simulation classifier for all subsets.")
 result = train_eval_powerset(model)
 
 # %%
