@@ -8,7 +8,7 @@ import datetime
 import logging
 import pandas as pd
 
-from time import time, process_time
+from time import process_time
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 from keras.callbacks import EarlyStopping
 from keras.models import Sequential
@@ -27,6 +27,7 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
 
     is_keras_model = isinstance(model, Sequential)
 
+    # Beware when running parallel runs, includes time spend by other cores
     start = process_time()
 
     if is_keras_model:
@@ -79,7 +80,6 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
 
 
 def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
-    logging.info("Comparing classification models.")
     result = pd.DataFrame(
         columns=[
             "Train",
@@ -97,12 +97,13 @@ def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
     )
     result.index.name = "classifier"
 
-    start_time = time()
+    start_time = process_time()
 
     if parallelize:
+        logging.info("Comparing classification models. Parallel runs.")
 
         def process_model(label, model):
-            logging.info(label)
+            logging.info(f"Model: {label}")
             values = train_and_evaluate(model, x_train, x_test, y_train, y_test)
             return label, values
 
@@ -113,12 +114,13 @@ def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
         for label, values in parallel_results:
             result.loc[label] = values
     else:
+        logging.info("Comparing classification models. Sequential runs.")
         for label, model in models_dict.items():
-            logging.info(label)
+            logging.info(f"Model: {label}")
             values = train_and_evaluate(model, x_train, x_test, y_train, y_test)
             result.loc[label] = values
 
-    duration = round(time() - start_time)
+    duration = round(process_time() - start_time)
     return result, duration
 
 
