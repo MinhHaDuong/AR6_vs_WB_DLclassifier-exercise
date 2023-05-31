@@ -21,7 +21,7 @@ DATA_DIFF2 = {}
 LABELS = {}
 
 for v in all_vars:
-    data_3d, labels = get_data([v], as_change=False, flatten=False)
+    data_3d, labels = get_data([v], diff=False, flatten=False)
     DATA[v] = flat(data_3d)
     DATA_DIFF[v] = flat(dif(data_3d))
     DATA_DIFF2[v] = flat(dif(dif(data_3d)))
@@ -31,8 +31,8 @@ for v in all_vars:
 # %% Display the sequences
 
 
-def compare_data(axs, var="pop", as_change=None, xlabel=None):
-    if as_change:
+def compare_data(axs, var="pop", diff=None, xlabel=None):
+    if diff:
         data = DATA_DIFF[var]
     else:
         data = DATA[var]
@@ -50,7 +50,7 @@ def compare_data(axs, var="pop", as_change=None, xlabel=None):
     x = np.arange(matrix1.shape[1])
 
     titles = [var + " observations", var + " simulations"]
-    if as_change:
+    if diff:
         titles = [s + " difference" for s in titles]
 
     for idx, (ax, matrix) in enumerate(zip(axs, [matrix1, matrix2])):
@@ -61,13 +61,13 @@ def compare_data(axs, var="pop", as_change=None, xlabel=None):
 
         ax.set_xlim(x.min(), x.max())
         ax.set_ylim(matrix.min(), matrix.max())
-        if as_change:
+        if diff:
             #            ax.set_ylim(0.5, 2)
             ax.axhline(0, color="black", linewidth=ax.spines["top"].get_linewidth())
 
         if xlabel:
             ax.set_xlabel("5 years period")
-        if as_change:
+        if diff:
             ax.set_ylabel("Difference to next period")
 
         ax.set_title(titles[idx])
@@ -76,12 +76,12 @@ def compare_data(axs, var="pop", as_change=None, xlabel=None):
     axs[0].set_ylim(axs[1].get_ylim())
 
 
-def fig_lines(as_change=False, filename=None):
+def fig_lines(diff=False, filename=None):
     _, axs = plt.subplots(4, 2, figsize=(12, 16))
-    compare_data(axs[0, :], "co2", as_change=as_change)
-    compare_data(axs[1, :], "pop", as_change=as_change)
-    compare_data(axs[2, :], "gdp", as_change=as_change)
-    compare_data(axs[3, :], "tpec", as_change=as_change, xlabel=True)
+    compare_data(axs[0, :], "co2", diff=diff)
+    compare_data(axs[1, :], "pop", diff=diff)
+    compare_data(axs[2, :], "gdp", diff=diff)
+    compare_data(axs[3, :], "tpec", diff=diff, xlabel=True)
     plt.tight_layout()
     if filename:
         plt.savefig(filename)
@@ -90,7 +90,7 @@ def fig_lines(as_change=False, filename=None):
 
 
 fig_lines(filename="fig1-levels.png")
-fig_lines(as_change=True, filename="fig2-changes.png")
+fig_lines(diff=True, filename="fig2-changes.png")
 
 
 # %% Display 2D scatterplots
