@@ -78,8 +78,9 @@ def _shake(df):
     result = result.dropna()
     result = result[(result != 0).all(axis=1)]
 
-    # Align level names and variable labels
+    # Align variables names mnemonics
     result = result.rename(index=var_map)
+    # Align index level names
     result = result.rename_axis(index=index_map)
 
     return result
