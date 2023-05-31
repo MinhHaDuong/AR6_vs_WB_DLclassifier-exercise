@@ -9,6 +9,9 @@ import logging
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
+from sklearn.utils import shuffle
 
 from owid_sequences import df_sequences as df_observations
 from ar6_sequences import df_sequences as df_simulations
@@ -61,7 +64,7 @@ def sequence2array(df, indicators, group_keys):
     return result
 
 
-def get_data(var=None, as_change=None, flatten=True):
+def get_data(var=None, diff=None, flatten=True):
     """
     Combine simulations and observations.
 
@@ -91,7 +94,7 @@ def get_data(var=None, as_change=None, flatten=True):
 
     data = np.concatenate((simulations, observations))
 
-    if as_change:
+    if diff:
         data = dif(data)
 
     if flatten:
@@ -100,6 +103,23 @@ def get_data(var=None, as_change=None, flatten=True):
     return data, labels
 
 
-def get_sets(var=None, as_change=None):
-    data, labels = get_data(var, as_change)
-    return train_test_split(data, labels, test_size=0.2, random_state=42)
+def get_sets(var=None, diff=None, normalize=False, rebalance=False):
+    data, labels = get_data(var, diff)
+    x_train, x_test, y_train, y_test = train_test_split(
+        data, labels, test_size=0.2, random_state=42
+    )
+
+    # Scale to zero mean, unit variance
+    if normalize:
+        scaler = StandardScaler()
+        scaler.fit(x_train)
+        x_train = scaler.transform(x_train)
+        x_test = scaler.transform(x_test)
+
+    # Oversample the minority to rebalance dataset
+    if rebalance:
+        rebalancer = SMOTE(random_state=0)
+        x_train, y_train = rebalancer.fit_resample(x_train, y_train)
+        x_train, y_train = shuffle(x_train, y_train, random_state=42)
+
+    return x_train, x_test, y_train, y_test

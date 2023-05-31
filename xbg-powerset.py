@@ -14,9 +14,6 @@ import xgboost as xgb
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import classification_report, roc_auc_score
-from imblearn.over_sampling import SMOTE
-from sklearn.preprocessing import StandardScaler
-from sklearn.utils import shuffle
 
 from log_config import setup_logger
 
@@ -29,18 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 def train_and_evaluate_model(model, x_train, y_train, x_test, y_test):
-    # Normalize data
-    scaler = StandardScaler()
-    x_train = scaler.fit_transform(x_train)
-    x_test = scaler.transform(x_test)
-
-    # Rebalance data
-    sm = SMOTE(random_state=42)
-    x_train, y_train = sm.fit_resample(x_train, y_train)
-
-    # After resampling, we may need to shuffle the data
-    x_train, y_train = shuffle(x_train, y_train, random_state=42)
-
     model.fit(x_train, y_train)
     y_pred = model.predict(x_test)
 
@@ -51,25 +36,20 @@ def train_and_evaluate_model(model, x_train, y_train, x_test, y_test):
     recall = score["weighted avg"]["recall"]
     accuracy = score["accuracy"]
 
-    # Calculate sample balance
-    num_positives = sum(y_train)
-    num_negatives = len(y_train) - num_positives
-    sample_balance = num_positives / num_negatives
-
-    return auc, f1, precision, recall, accuracy, sample_balance
+    return auc, f1, precision, recall, accuracy
 
 
 def train_eval_powerset(model):
-    result = pd.DataFrame(
-        columns=["AUC", "F1", "Precision", "Recall", "Accuracy", "Sample Balance"]
-    )
+    result = pd.DataFrame(columns=["AUC", "F1", "Precision", "Recall", "Accuracy"])
     result.index.name = "variables"
 
     for r in range(1, len(all_vars) + 1):
         for subset in itertools.combinations(all_vars, r):
             key = str(subset).replace(",)", ")").replace("'", "")
             logging.info(key)
-            x_train, x_test, y_train, y_test = get_sets(subset, as_change=True)
+            x_train, x_test, y_train, y_test = get_sets(
+                subset, diff=True, normalize=True, rebalance=True
+            )
             values = train_and_evaluate_model(model, x_train, y_train, x_test, y_test)
             result.loc[key] = values
 
