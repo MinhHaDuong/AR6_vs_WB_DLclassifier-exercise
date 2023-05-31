@@ -16,13 +16,13 @@ from keras_tuner.engine.objective import Objective
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import classification_report
 
-from data import get_data, get_sets
+from data import get_sets
 
 
 # Multilayers perceptron
 
 
-def model_mlp(input_dim, n1=224, d1=0.3, n2=64, d2=0.1, n3=1, d3=0):
+def model_mlp(input_dim, n1=64, d1=0.1, n2=32, d2=0.1, n3=16, d3=0):
     model = Sequential()
     model.add(Dense(n1, activation="relu", input_dim=input_dim))
     model.add(Dropout(d1))
@@ -96,28 +96,36 @@ def define_train_test():
 # %% Tune the model on the complete variables case
 
 
-def model_mlp_tunable(hp):
+def model_mlp_tunable(hp, input_dimension):
     model = tf.keras.models.Sequential()
 
-    data, labels = get_data()
     model.add(
         layers.Dense(
-            units=hp.Int("units_1", min_value=32, max_value=256, step=32),
+            units=hp.Int("units_1", min_value=32, max_value=128, step=32),
             activation="relu",
-            input_dim=data.shape[1],
+            input_dim=input_dimension,
         )
     )
     model.add(
-        layers.Dropout(hp.Float("dropout_1", min_value=0.0, max_value=0.5, step=0.1))
+        layers.Dropout(hp.Float("dropout_1", min_value=0.0, max_value=0.3, step=0.1))
     )
     model.add(
         layers.Dense(
-            units=hp.Int("units_2", min_value=32, max_value=128, step=32),
+            units=hp.Int("units_2", min_value=16, max_value=64, step=16),
             activation="relu",
         )
     )
     model.add(
-        layers.Dropout(hp.Float("dropout_2", min_value=0.0, max_value=0.5, step=0.1))
+        layers.Dropout(hp.Float("dropout_2", min_value=0.0, max_value=0.3, step=0.1))
+    )
+    model.add(
+        layers.Dense(
+            units=hp.Int("units_3", min_value=8, max_value=32, step=8),
+            activation="relu",
+        )
+    )
+    model.add(
+        layers.Dropout(hp.Float("dropout_3", min_value=0.0, max_value=0.3, step=0.1))
     )
     model.add(layers.Dense(1, activation="sigmoid"))
 
@@ -125,9 +133,6 @@ def model_mlp_tunable(hp):
         loss="binary_crossentropy",
         optimizer=Adam(hp.Choice("learning_rate", values=[1e-2, 1e-3, 1e-4])),
         metrics=[
-            "accuracy",
-            metrics.Precision(name="precision"),
-            metrics.Recall(name="recall"),
             metrics.AUC(name="auc"),
             tfa.metrics.F1Score(name="f1_score", num_classes=1, threshold=0.5),
         ],
@@ -140,7 +145,7 @@ def tune_mlp():
     x_train, x_test, y_train, y_test = get_sets()
 
     tuner = RandomSearch(
-        model_mlp_tunable,
+        lambda hp: model_mlp_tunable(hp, x_train.shape[1]),
         objective=Objective("val_auc", direction="max"),
         max_trials=50,
         directory="my_dir",
