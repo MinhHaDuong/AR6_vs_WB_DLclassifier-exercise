@@ -13,8 +13,8 @@ from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 from sklearn.utils import shuffle
 
-from owid_sequences import df_sequences as df_observations
-from ar6_sequences import df_sequences as df_simulations
+from owid_sequences import get_sequences as get_df_observations
+from ar6_sequences import get_sequences as get_df_simulations
 
 from log_config import setup_logger
 
@@ -78,10 +78,10 @@ def get_data(var=None, diff=None, flatten=True):
     if isinstance(var, pd.Index):
         var = var.tolist()
 
-    observations = sequence2array(df_observations, var, ["country", "year"])
+    observations = sequence2array(get_df_observations(), var, ["country", "year"])
 
     simulations = sequence2array(
-        df_simulations,
+        get_df_simulations,
         var,
         ["Model", "Scenario", "countrycode", "year"],
     )

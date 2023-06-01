@@ -20,7 +20,7 @@ setup_logger()
 logger = logging.getLogger(__name__)
 
 
-FILENAME_CLEAN = "ar6_sequences.pkl"
+FILENAME = "ar6_sequences.pkl"
 
 var_map = {
     "Population": "pop",
@@ -103,15 +103,23 @@ def sequences(n_samples=None):
 
 # %%
 
-try:
-    df_sequences = pd.read_pickle(FILENAME_CLEAN)
-    logging.info(f"Success read  file {FILENAME_CLEAN} ")
-except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-    logging.info(f"Unable to access {FILENAME_CLEAN} : {e_read}")
-    logging.info("Attempting to create it.")
+def get_sequences():
+    try:
+        df_sequences = pd.read_pickle(FILENAME)
+        logging.info(f"Success read  file {FILENAME} ")
+        return df_sequences
+    except (IOError, EOFError, pickle.UnpicklingError) as e_read:
+        logging.info(f"Unable to access {FILENAME} : {e_read}")
+        logging.info("Attempting to create it.")
     try:
         df_sequences = sequences()
-        df_sequences.to_pickle(FILENAME_CLEAN)
-        logging.info("Cleaned OWID trajectories saved successfully!")
+        df_sequences.to_pickle(FILENAME)
+        logging.info("Cleaned ar6 sequences saved successfully!")
+        return df_sequences
     except Exception as e:
-        logging.error(f"An error occurred while saving the OWID trajectories: {e}")
+        logging.error(f"An error occurred while saving the ar6 sequences: {e}")
+
+
+# When run directly, create the .pkl if necessary 
+if __name__ == "__main__":
+    get_sequences()

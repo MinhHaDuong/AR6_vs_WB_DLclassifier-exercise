@@ -206,3 +206,9 @@ def root_variables(df):
     variables = get_variables(df)
     roots = [s for s in variables if "|" not in s]
     return top_variables(df, -1)[roots].sort_values(ascending=False)
+
+
+# When run directly, create the .pkl if necessary 
+if __name__ == "__main__":
+    get_trajectories()
+

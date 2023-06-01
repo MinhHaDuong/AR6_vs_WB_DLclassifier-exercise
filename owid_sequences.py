@@ -7,7 +7,10 @@ Cache the result in a .pkl file
 
 See OWID data pipeline https://docs.owid.io/projects/etl/en/latest/api/python/
 
-Usage: from owid_sequences import df_sequences as df_observations
+Usage:
+Run standalone to create owid_sequences.pkl if it does not exist yet.
+Import as a module   from owid_sequences import get_sequences
+(exposes a getter not the df_sequence for lazy filecheck).
 
 Created on Thu Apr 20 15:03:33 2023
 @author: haduong@centre-cired.fr
@@ -105,13 +108,15 @@ def shake(df):
 
 # %%
 
-try:
-    df_sequences = pd.read_pickle(FILENAME_CLEAN)
-    logging.info(f"Success read file {FILENAME_CLEAN} ")
-except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-    logging.info(
-        f"Unable to access {FILENAME_CLEAN} : {e_read} \nAttempting to create it."
-    )
+def get_sequences():
+    try:
+        df_sequences = pd.read_pickle(FILENAME_CLEAN)
+        logging.info(f"Success read file {FILENAME_CLEAN} ")
+        return df_sequences
+    except (IOError, EOFError, pickle.UnpicklingError) as e_read:
+        logging.info(
+            f"Unable to access {FILENAME_CLEAN} : {e_read} \nAttempting to create it."
+        )
     try:
         with open(FILENAME_NOTCOUNTRY, "r") as file:
             not_country = [line.strip() for line in file]
@@ -119,5 +124,11 @@ except (IOError, EOFError, pickle.UnpicklingError) as e_read:
         df_sequences = shake(df_filtered)
         df_sequences.to_pickle(FILENAME_CLEAN)
         logging.info("Cleaned OWID sequences saved successfully!")
+        return df_sequences
     except Exception as e:
-        logging.error(f"An error occurred while saving the OWID trajectories: {e} ")
+        logging.error(f"An error occurred while saving the OWID sequences: {e} ")
+
+
+# When run directly, create the .pkl if necessary 
+if __name__ == "__main__":
+    get_sequences()
