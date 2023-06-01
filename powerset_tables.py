@@ -9,9 +9,9 @@ Created on Wed May 17 16:34:14 2023
 import datetime
 from powerset import get_results
 
-result = get_results()
+FILENAME = "tables/powerset.tex"
 
-TAB = "\t"
+result = get_results()
 
 message = f"""
 Are IPCC AR6 scenarios realistic?
@@ -37,11 +37,8 @@ Results shows that
 
 
 {result}
-
-Cut and paste-ready: Sorted by F1, tab-separated
-{result.sort_values(by="F1", ascending=False).round(3).to_csv(sep=TAB)}
 """
 
 print(message)
-with open("tables/powerset.csv", "w", encoding="utf-8") as f:
-    print(message, file=f)
+
+result.sort_values(by="F1", ascending=False).to_latex(FILENAME, float_format="%.3f")

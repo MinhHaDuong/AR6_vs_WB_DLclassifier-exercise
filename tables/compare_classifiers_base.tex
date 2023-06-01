@@ -1,0 +1,19 @@
+\begin{tabular}{lrrrrrr}
+\toprule
+ & Train & Predict & tp & tn & fp & fn \\
+classifier &  &  &  &  &  &  \\
+\midrule
+Dummy baseline & 0.002 & 0.000 & 0 & 5682 & 0 & 604 \\
+Logistic regression & 0.659 & 0.001 & 575 & 5230 & 452 & 29 \\
+Support vector machine & 39.404 & 1.576 & 593 & 5642 & 40 & 11 \\
+Random forest & 118.484 & 0.319 & 594 & 5671 & 11 & 10 \\
+Gradient boosting machine & 17.378 & 0.031 & 597 & 5674 & 8 & 7 \\
+Multilayer perceptron default & 14.256 & 0.510 & 573 & 5415 & 267 & 31 \\
+Multilayer perceptron bis & 49.090 & 0.478 & 570 & 5633 & 49 & 34 \\
+Multilayer perceptron ter & 24.803 & 0.479 & 590 & 5558 & 124 & 14 \\
+Multilayer perceptron 128/0/48/0.1/16/0 & 31.982 & 0.499 & 585 & 5607 & 75 & 19 \\
+Multilayer perceptron 96/0/48/0.2/8/0.2 & 65.297 & 0.496 & 590 & 5632 & 50 & 14 \\
+Multilayer perceptron 64/0/32/0/32/0.1 & 24.971 & 0.513 & 0 & 5682 & 0 & 604 \\
+Multilayer perceptron 32/0.1/32/0.1/32/0.2 & 24.752 & 0.528 & 563 & 5540 & 142 & 41 \\
+\bottomrule
+\end{tabular}

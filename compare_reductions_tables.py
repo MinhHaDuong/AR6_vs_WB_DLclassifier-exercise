@@ -7,8 +7,10 @@ Created on Tue June 1 13:46 2023
 
 
 import pandas as pd
-from compare_reduction import get_results
+from compare_reductions import get_results
 from compare import pretty_print
+
+FILESTEM = "tables/compare_reductions"
 
 results = get_results()
 
@@ -19,5 +21,12 @@ keys = ["normalized", "PCA", "latent", "latent2"]
 
 print(pretty_print(results, keys, "to_string"))
 
-with open("tables/compare_reductions.csv", "w", encoding="utf-8") as f:
-    print(pretty_print(results, keys, "to_csv", sep="\t"), file=f)
+for key in keys:
+    FILENAME = FILESTEM + "_" + key.replace(" ", "_") + ".tex"
+    table = results.loc[key, "result"]
+    table = table.iloc[:, 2:6]
+    if key in ["PCA", "latent2"]:
+        idx=False
+    else:
+        idx=True
+    table.to_latex(FILENAME, float_format="%.3f", index=idx)

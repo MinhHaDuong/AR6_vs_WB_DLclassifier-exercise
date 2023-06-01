@@ -1,0 +1,10 @@
+Check if GapMinder Systema Globalis database is better than world-bank-data
+Check if wbgapi interface is better than world-bank-data
+Pull tpec from IEA
+
+Change label to contain source, countrycode, start_year.
+Show CDF corrected for country composition.
+Export units and use it in the figures
+Output the tables in two versions: full for the annex, partial for the body
+
+Writeup lessons learned, and what we want to demonstrate next.
