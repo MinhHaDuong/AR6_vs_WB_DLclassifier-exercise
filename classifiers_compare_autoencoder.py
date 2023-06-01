@@ -136,5 +136,5 @@ keys = ["normalized", "PCA", "latent", "latent2"]
 
 print(pretty_print(results, keys, "to_string"))
 
-with open("classifiers_compare_autoencoder.csv", "w", encoding="utf-8") as f:
+with open("tables/classifiers_compare_autoencoder.csv", "w", encoding="utf-8") as f:
     print(pretty_print(results, keys, "to_csv", sep="\t"), file=f)

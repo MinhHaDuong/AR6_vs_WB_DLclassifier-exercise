@@ -29,5 +29,5 @@ keys = [
 
 print(pretty_print(results, keys, "to_string"))
 
-with open("classifiers_compare_kind.csv", "w", encoding="utf-8") as f:
+with open("tables/classifiers_compare_kind.csv", "w", encoding="utf-8") as f:
     print(pretty_print(results, keys, "to_csv", sep="\t"), file=f)
