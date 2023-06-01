@@ -70,6 +70,6 @@ def get_results():
     return results
 
 
-# When run directly, create the .pkl if necessary 
+# When run directly, create the .pkl if necessary
 if __name__ == "__main__":
     get_results()

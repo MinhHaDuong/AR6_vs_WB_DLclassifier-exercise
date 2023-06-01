@@ -192,7 +192,6 @@ def root_variables(df):
     return top_variables(df, -1)[roots].sort_values(ascending=False)
 
 
-# When run directly, create the .pkl if necessary 
+# When run directly, create the .pkl if necessary
 if __name__ == "__main__":
     get_trajectories()
-

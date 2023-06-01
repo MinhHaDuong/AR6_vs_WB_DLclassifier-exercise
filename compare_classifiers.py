@@ -37,8 +37,12 @@ def get_results():
         "Multilayer perceptron default": model_mlp(dim),
         "Multilayer perceptron bis": model_mlp(dim),
         "Multilayer perceptron ter": model_mlp(dim),
-        "Multilayer perceptron 128/0/48/0.1/16/0": model_mlp(dim, 128, 0, 48, 0.1, 16, 0),
-        "Multilayer perceptron 96/0/48/0.2/8/0.2": model_mlp(dim, 96, 0, 48, 0.2, 8, 0.2),
+        "Multilayer perceptron 128/0/48/0.1/16/0": model_mlp(
+            dim, 128, 0, 48, 0.1, 16, 0
+        ),
+        "Multilayer perceptron 96/0/48/0.2/8/0.2": model_mlp(
+            dim, 96, 0, 48, 0.2, 8, 0.2
+        ),
         "Multilayer perceptron 64/0/32/0/32/0.1": model_mlp(dim, 64, 0, 32, 0, 32, 0.1),
         "Multilayer perceptron 32/0.1/32/0.1/32/0.2": model_mlp(
             dim, 32, 0.1, 32, 0.1, 32, 0.2
@@ -66,6 +70,6 @@ def get_results():
     return results
 
 
-# When run directly, create the .pkl if necessary 
+# When run directly, create the .pkl if necessary
 if __name__ == "__main__":
     get_results()

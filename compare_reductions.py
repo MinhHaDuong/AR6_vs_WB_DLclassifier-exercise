@@ -81,12 +81,11 @@ def perform_autoencode(
 @cache(__file__)
 def get_results():
     results = pd.DataFrame(columns=["result", "duration"])
-    
+
     x_base_train, x_base_test, y_train, y_test = get_sets(
         all_vars, diff=True, normalize=True, rebalance=True
     )
-    
-    
+
     def models_dict(input_dim=x_base_train.shape[1]):
         return {
             "Dummy baseline": model_dummy,
@@ -95,19 +94,17 @@ def get_results():
             "bis": model_mlp(input_dim),
             "ter": model_mlp(input_dim),
         }
-    
-    
+
     results.loc["normalized"] = compare(
         models_dict(), x_base_train, x_base_test, y_train, y_test
     )
-    
+
     x_pca_train, x_pca_test = perform_pca(x_base_train, x_base_test)
     assert x_pca_train.shape[1] == NEWDIM
     results.loc["PCA"] = compare(
         models_dict(NEWDIM), x_pca_train, x_pca_test, y_train, y_test
     )
-    
-    
+
     x_latent_train, x_latent_test = perform_autoencode(x_base_train, x_base_test)
     assert x_latent_train.shape[1] == NEWDIM
     results.loc["latent"] = compare(
@@ -117,7 +114,7 @@ def get_results():
         y_train,
         y_test,
     )
-    
+
     x_latent2_train, x_latent2_test = perform_autoencode(x_base_train, x_base_test, n=2)
     assert x_latent_train.shape[1] == NEWDIM
     results.loc["latent2"] = compare(
@@ -130,6 +127,6 @@ def get_results():
     return results
 
 
-# When run directly, create the .pkl if necessary 
+# When run directly, create the .pkl if necessary
 if __name__ == "__main__":
     get_results()

@@ -11,6 +11,7 @@ from powerset import get_results
 
 result = get_results()
 
+
 def graph(score_name):
     plt.clf()
     _, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
@@ -38,6 +39,7 @@ def graph(score_name):
     )
     plt.tight_layout()
     plt.savefig(f"figures/single_variable_{score_name}.png")
+
 
 graph("AUC")
 graph("F1")
