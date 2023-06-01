@@ -18,7 +18,7 @@ def cache(module_name):
     Returns:
         function: The decorated function.
     """
-    filename = os.path.splitext(module_name)[0] + ".pkl"
+    filename = "cache/" + os.path.splitext(module_name)[0] + ".pkl"
 
     def real_decorator(function):
         def wrapper(*args, **kwargs):

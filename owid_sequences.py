@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 
 # Got it at  https://github.com/owid/co2-data/blob/master/owid-co2-data.csv
 # Units at https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv
-FILENAME_IN = "owid-co2-data.csv"
-FILENAME_NOTCOUNTRY = "owid_notcountry.csv"
+FILENAME_IN = "data/owid-co2-data.csv"
+FILENAME_NOTCOUNTRY = "data/owid_notcountry.csv"
 
 
 def get_dataframe(filename, censored_countrynames=[]):

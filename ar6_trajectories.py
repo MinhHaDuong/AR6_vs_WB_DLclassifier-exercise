@@ -27,7 +27,7 @@ from utils import cache
 setup_logger()
 logger = logging.getLogger(__name__)
 
-FILENAME_IN = "AR6_Scenarios_Database_ISO3_v1.1.csv"
+FILENAME_IN = "data/AR6_Scenarios_Database_ISO3_v1.1.csv"
 
 # %% Import the data
 

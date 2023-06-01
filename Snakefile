@@ -6,32 +6,33 @@
 # Data wrangling
 
 rule ar6_trajectories:
-    input: "AR6_Scenarios_Database_ISO3_v1.1.csv"
-    output: "ar6_trajectories.pkl"
+    input: "data/AR6_Scenarios_Database_ISO3_v1.1.csv"
+    output: "cache/ar6_trajectories.pkl"
     shell: "python3 ar6_trajectories.py"
 
 rule ar6_sequences:
-    input: "ar6_trajectories.pkl"
-    output: "ar6_sequences.pkl"
+    input: "cache/ar6_trajectories.pkl"
+    output: "cache/ar6_sequences.pkl"
     shell: "python3 ar6_sequences.py"
 
 rule owid_sequences:
-    input: "owid-co2-data.csv", "owid_notcountry.csv"
-    output: "owid_sequences.pkl"
+    input: "data/owid-co2-data.csv", "data/owid_notcountry.csv"
+    output: "cache/owid_sequences.pkl"
     shell: "python3 owid_sequences.py"
 
 
 # Analysis
 
-SEQUENCES=["owid_sequences.pkl", "ar6_sequences.pkl"]
+SEQUENCES=["cache/owid_sequences.pkl", "cache/ar6_sequences.pkl"]
 SCRIPTS = ['powerset', 'compare_classifiers', 'compare_reductions']
+
+wildcard_constraints:
+    script= '|'.join(SCRIPTS)
 
 rule run_script:
     input: SEQUENCES
-    output: "{name}.pkl"
-    shell: "python3 {wildcards.name}.py"
-    wildcard_constraints: name = '|'.join(SCRIPTS)
-
+    output: "cache/{script}.pkl"
+    shell: "python3 {script}.py"
 
 # Visualisation
 
@@ -40,10 +41,9 @@ FIGURES_SENSITIVITY=["figures/" + name + ".png" for name in ["single_variable_AU
 TABLES=["tables/" + name + ".csv" for name in ["powerset", "compare_classifiers", "compare_reductions"]]
 
 rule create_table:
-    input: "{name}.pkl"
+    input: "cache/{name}.pkl"
     output: "tables/{name}.csv"
-    shell: "python3 {wildcards.name}_tables.py"
-    wildcard_constraints: name = '|'.join(SCRIPTS)
+    shell: "python3 {script}_tables.py"
 
 rule figures_univar:
     input: SEQUENCES
