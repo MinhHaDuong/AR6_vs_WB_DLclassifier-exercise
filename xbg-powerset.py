@@ -143,7 +143,7 @@ def graph(score_name):
         f"Effect of the presence of a variable on the classifier performance ({score_name} score)"
     )
     plt.tight_layout()
-    plt.savefig(f"single_variable_{score_name}.png")
+    plt.savefig(f"figures/single_variable_{score_name}.png")
     plt.show()
 
 

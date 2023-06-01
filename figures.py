@@ -89,8 +89,8 @@ def fig_lines(diff=False, filename=None):
         plt.show()
 
 
-fig_lines(filename="fig1-levels.png")
-fig_lines(diff=True, filename="fig2-changes.png")
+fig_lines(filename="figures/fig1-levels.png")
+fig_lines(diff=True, filename="figures/fig2-changes.png")
 
 
 # %% Display 2D scatterplots
@@ -209,7 +209,7 @@ def fig_scatter(filename=None):
         plt.show()
 
 
-fig_scatter("fig3_2D.png")
+fig_scatter("figures/fig3_2D.png")
 
 
 # %% Display a 3D scatterplot
@@ -252,7 +252,7 @@ def fig_scatter3d(azimuths, filename=None):
     plt.show()
 
 
-fig_scatter3d([100], "fig3_3D")
+fig_scatter3d([100], "figures/fig3_3D")
 
 # %% Finetuning the viewpoint
 
@@ -318,4 +318,4 @@ def fig_cdf(filename=None):
         plt.show()
 
 
-fig_cdf("fig4_cdf")
+fig_cdf("figures/fig4_cdf")
