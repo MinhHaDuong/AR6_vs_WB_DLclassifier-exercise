@@ -81,7 +81,7 @@ def get_data(var=None, diff=None, flatten=True):
     observations = sequence2array(get_df_observations(), var, ["country", "year"])
 
     simulations = sequence2array(
-        get_df_simulations,
+        get_df_simulations(),
         var,
         ["Model", "Scenario", "countrycode", "year"],
     )

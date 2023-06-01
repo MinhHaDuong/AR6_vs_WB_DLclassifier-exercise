@@ -7,23 +7,24 @@ Created on Tue May 30 12:42:04 2023
 @author: haduong
 """
 
-import pandas as pd
-import pickle
 import logging
+import pandas as pd
 
 from classifier_others import model_dummy, model_lr, model_rf, model_svm, model_xgb
 from classifier_mlp import model_mlp
-from classifiers_compare import compare
+from compare import compare
 
 from data import get_sets
+from utils import cache
+
 from log_config import setup_logger
 
 setup_logger()
 logger = logging.getLogger(__name__)
 
-FILENAME="classifiers_compare_kind.pkl"
 
-def get_results(filename):
+@cache(__file__)
+def get_results():
     # Compare our default with the top four architectures from the model tuner
     x_train, _, _, _ = get_sets(diff=True)
     dim = x_train.shape[1]
@@ -65,15 +66,6 @@ def get_results(filename):
     return results
 
 
-try:
-    results = pd.read_pickle(FILENAME)
-    logging.info(f"Success read  file {FILENAME} ")
-except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-    logging.info(f"Unable to access {FILENAME} : {e_read}")
-    logging.info("Attempting to create it.")
-    try:
-        results = get_results()
-        results.to_pickle(FILENAME)
-        logging.info("Classifiers comparison saved successfully!")
-    except Exception as e:
-        logging.error(f"An error occurred while saving the classifiers comparison: {e}")
+# When run directly, create the .pkl if necessary 
+if __name__ == "__main__":
+    get_results()

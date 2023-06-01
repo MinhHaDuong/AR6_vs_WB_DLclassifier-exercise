@@ -85,8 +85,6 @@ def fig_lines(diff=False, filename=None):
     plt.tight_layout()
     if filename:
         plt.savefig(filename)
-    else:
-        plt.show()
 
 
 fig_lines(filename="figures/fig1-levels.png")
@@ -205,8 +203,6 @@ def fig_scatter(filename=None):
     plt.tight_layout()
     if filename:
         plt.savefig(filename)
-    else:
-        plt.show()
 
 
 fig_scatter("figures/fig3_2D.png")
@@ -249,7 +245,6 @@ def fig_scatter3d(azimuths, filename=None):
             cloud3d(ax, df_obs, df_sim, var, azimut=azim)
     if filename:
         plt.savefig(filename)
-    plt.show()
 
 
 fig_scatter3d([100], "figures/fig3_3D")
@@ -314,8 +309,6 @@ def fig_cdf(filename=None):
     plt.subplots_adjust(top=0.95)
     if filename:
         plt.savefig(filename)
-    else:
-        plt.show()
 
 
 fig_cdf("figures/fig4_cdf")

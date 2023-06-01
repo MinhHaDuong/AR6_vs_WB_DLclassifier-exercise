@@ -16,19 +16,19 @@ Created on Thu Apr 20 15:03:33 2023
 @author: haduong@centre-cired.fr
 """
 
-import pickle
 import logging
 import pandas as pd
+from functools import lru_cache
 
 from log_config import setup_logger
+from utils import cache
 
 setup_logger()
 logger = logging.getLogger(__name__)
 
 # Got it at  https://github.com/owid/co2-data/blob/master/owid-co2-data.csv
 # Units at https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv
-FILENAME_RAW = "owid-co2-data.csv"
-FILENAME_CLEAN = "owid_sequences.pkl"
+FILENAME_IN = "owid-co2-data.csv"
 FILENAME_NOTCOUNTRY = "owid_notcountry.csv"
 
 
@@ -71,9 +71,6 @@ def get_dataframe(filename, censored_countrynames=[]):
     return df
 
 
-# %%
-
-
 def _get_values_forward(group):
     group = group.reset_index().set_index("year")
     group = group.drop(columns=["country", "variable"])
@@ -106,27 +103,14 @@ def shake(df):
     return result
 
 
-# %%
-
+@cache(__file__)
+@lru_cache(maxsize=128)
 def get_sequences():
-    try:
-        df_sequences = pd.read_pickle(FILENAME_CLEAN)
-        logging.info(f"Success read file {FILENAME_CLEAN} ")
-        return df_sequences
-    except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-        logging.info(
-            f"Unable to access {FILENAME_CLEAN} : {e_read} \nAttempting to create it."
-        )
-    try:
-        with open(FILENAME_NOTCOUNTRY, "r") as file:
-            not_country = [line.strip() for line in file]
-        df_filtered = get_dataframe(FILENAME_RAW, not_country)
-        df_sequences = shake(df_filtered)
-        df_sequences.to_pickle(FILENAME_CLEAN)
-        logging.info("Cleaned OWID sequences saved successfully!")
-        return df_sequences
-    except Exception as e:
-        logging.error(f"An error occurred while saving the OWID sequences: {e} ")
+    with open(FILENAME_NOTCOUNTRY, "r") as file:
+        not_country = [line.strip() for line in file]
+    df_filtered = get_dataframe(FILENAME_IN, not_country)
+    df_sequences = shake(df_filtered)
+    return df_sequences
 
 
 # When run directly, create the .pkl if necessary 

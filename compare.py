@@ -3,7 +3,6 @@ Created on Mon May 29 17:24:47 2023
 
 @author: haduong@centre-cired.fr
 """
-
 import datetime
 import logging
 import pandas as pd

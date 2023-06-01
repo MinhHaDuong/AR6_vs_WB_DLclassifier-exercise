@@ -8,19 +8,18 @@ Created on Tue May 23 12:57:57 2023
 """
 
 import logging
-import pickle
+from functools import lru_cache
 import pandas as pd
 import multiprocessing as mp  # Breaks Spyder profilers, and hit RAM on T480s 8Gb
 
 from ar6_trajectories import get_trajectories
 
 from log_config import setup_logger
+from utils import cache
 
 setup_logger()
 logger = logging.getLogger(__name__)
 
-
-FILENAME = "ar6_sequences.pkl"
 
 var_map = {
     "Population": "pop",
@@ -86,7 +85,9 @@ def _shake(df):
     return result
 
 
-def sequences(n_samples=None):
+@cache(__file__)
+@lru_cache(maxsize=128)
+def get_sequences(n_samples=None):
     df_trajectories = get_trajectories()
     if n_samples:
         df_trajectories = df_trajectories[:n_samples]
@@ -94,7 +95,6 @@ def sequences(n_samples=None):
         df_trajectories.index.get_level_values("Variable").isin(indicators)
     ]
     df = df.drop(columns=["Unit"])
-
     df_sequences = _shake(df)
     return df_sequences
 
@@ -102,22 +102,6 @@ def sequences(n_samples=None):
 # sample = sequences(20000)
 
 # %%
-
-def get_sequences():
-    try:
-        df_sequences = pd.read_pickle(FILENAME)
-        logging.info(f"Success read  file {FILENAME} ")
-        return df_sequences
-    except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-        logging.info(f"Unable to access {FILENAME} : {e_read}")
-        logging.info("Attempting to create it.")
-    try:
-        df_sequences = sequences()
-        df_sequences.to_pickle(FILENAME)
-        logging.info("Cleaned ar6 sequences saved successfully!")
-        return df_sequences
-    except Exception as e:
-        logging.error(f"An error occurred while saving the ar6 sequences: {e}")
 
 
 # When run directly, create the .pkl if necessary 
