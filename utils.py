@@ -1,3 +1,8 @@
+"""Common functions and decorators
+
+haduong@centre-cired.fr    2023-06-01
+"""
+
 import os
 import pickle
 import logging
@@ -25,20 +30,22 @@ def cache(module_name):
     def real_decorator(function):
         def wrapper(*args, **kwargs):
             try:
-                with open(filename, "rb") as f:
-                    result = pickle.load(f)
-                logging.info(f"   Success read file {filename}")
+                with open(filename, "rb") as file:
+                    result = pickle.load(file)
+                logging.info("   Success read file %s", filename)
             except (IOError, EOFError, pickle.UnpicklingError) as e_read:
-                logging.info(f"Unable to fetch {filename} : {e_read} .")
+                logging.info("Unable to fetch %s : %s.", filename, e_read)
                 logging.info("Attempting now to create it.")
                 try:
                     result = function(*args, **kwargs)
-                    with open(filename, "wb") as f:
-                        pickle.dump(result, f)
-                    logging.info(f"Saved {filename}.")
+                    with open(filename, "wb") as file:
+                        pickle.dump(result, file)
+                    logging.info("Saved %s.", filename)
                 except Exception as e_write:
                     logging.error(
-                        f"   An error occurred while saving to {filename}: {e_write} "
+                        "   An error occurred while saving to %s: %s.",
+                        filename,
+                        e_write,
                     )
                     return None
             return result

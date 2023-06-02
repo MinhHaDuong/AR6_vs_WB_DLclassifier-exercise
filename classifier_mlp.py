@@ -12,10 +12,11 @@ from keras.callbacks import EarlyStopping
 
 import tensorflow as tf
 from tensorflow.keras import layers, metrics
+from tensorflow.keras.optimizers import Adam
 import tensorflow_addons as tfa
+
 from keras_tuner import RandomSearch
 from keras_tuner.engine.objective import Objective
-from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import classification_report
 
 from data import get_sets
@@ -28,14 +29,17 @@ logger = logging.getLogger(__name__)
 # Multilayers perceptron
 
 
-def model_mlp(input_dim, n1=32, d1=0.05, n2=32, d2=0.05, n3=32, d3=0.05):
+def model_mlp(input_dim, arch=None):
+    if arch is None:
+        arch = [32, 0.05, 32, 0.05, 32, 0.0]
+    assert len(arch) == 6, "MLP model architecture must be a list of 6 numbers."
     model = Sequential()
-    model.add(Dense(n1, activation="relu", input_dim=input_dim))
-    model.add(Dropout(d1))
-    model.add(Dense(n2, activation="relu"))
-    model.add(Dropout(d2))
-    model.add(Dense(n3, activation="relu"))
-    model.add(Dropout(d3))
+    model.add(Dense(arch[0], activation="relu", input_dim=input_dim))
+    model.add(Dropout(arch[1]))
+    model.add(Dense(arch[2], activation="relu"))
+    model.add(Dropout(arch[3]))
+    model.add(Dense(arch[5], activation="relu"))
+    model.add(Dropout(arch[5]))
     model.add(Dense(1, activation="sigmoid"))
 
     model.compile(

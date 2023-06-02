@@ -3,11 +3,11 @@ Created on Mon May 29 17:24:47 2023
 
 @author: haduong@centre-cired.fr
 """
+from time import process_time
 import datetime
 import logging
 import pandas as pd
 
-from time import process_time
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 from keras.callbacks import EarlyStopping
 from keras.models import Sequential
@@ -58,27 +58,32 @@ def train_and_evaluate(model, x_train, x_test, y_train, y_test):
     predict_t = process_time() - start
 
     logging.info("Computing evaluation metrics.")
-    cm = confusion_matrix(y_test, y_pred)
-    tp = cm[1, 1]  # True positives
-    tn = cm[0, 0]  # True negatives
-    fp = cm[0, 1]  # False positives
-    fn = cm[1, 0]  # False negatives
-
     score = classification_report(y_test, y_pred, output_dict=True, zero_division=1)
-    f1 = score["weighted avg"]["f1-score"]
-    precision = score["weighted avg"]["precision"]
-    recall = score["weighted avg"]["recall"]
-    # Imbalanced classes, disregard accuracy
-
     if is_keras_model:
-        auc = roc_auc_score(y_test, y_pred_continuous)
+        roc_auc = roc_auc_score(y_test, y_pred_continuous)
     else:
-        auc = roc_auc_score(y_test, y_pred)
+        roc_auc = roc_auc_score(y_test, y_pred)
 
-    return train_t, predict_t, tp, tn, fp, fn, auc, f1, precision, recall, model
+    results = (
+        train_t,  # Train time
+        predict_t,  # Predict time
+        confusion_matrix(y_test, y_pred)[1, 1],  # True positives
+        confusion_matrix(y_test, y_pred)[0, 0],  # True negatives
+        confusion_matrix(y_test, y_pred)[0, 1],  # False positives
+        confusion_matrix(y_test, y_pred)[1, 0],  # False negatives
+        roc_auc,  # Area Under Curve
+        score["weighted avg"]["f1-score"],  # F1
+        score["weighted avg"]["precision"],  # Precision
+        score["weighted avg"]["recall"],  # Recall
+        model,  # Model object
+    )
+
+    return results
 
 
-def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
+def compare(models_dict, data_tuple, parallelize=True):
+    x_train, x_test, y_train, y_test = data_tuple
+
     result = pd.DataFrame(
         columns=[
             "Train",
@@ -102,7 +107,7 @@ def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
         logging.info("Comparing classification models. Parallel runs.")
 
         def process_model(label, model):
-            logging.info(f"Model: {label}")
+            logging.info("Model: %s", label)
             values = train_and_evaluate(model, x_train, x_test, y_train, y_test)
             return label, values
 
@@ -115,7 +120,7 @@ def compare(models_dict, x_train, x_test, y_train, y_test, parallelize=True):
     else:
         logging.info("Comparing classification models. Sequential runs.")
         for label, model in models_dict.items():
-            logging.info(f"Model: {label}")
+            logging.info("Model: %s", label)
             values = train_and_evaluate(model, x_train, x_test, y_train, y_test)
             result.loc[label] = values
 

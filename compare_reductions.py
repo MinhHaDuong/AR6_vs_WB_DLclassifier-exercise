@@ -8,13 +8,13 @@ Created on Tue May 30 12:24:16 2023
 import logging
 import pandas as pd
 
-from data import get_sets, all_vars
-
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 
 from sklearn.decomposition import PCA
+
+from data import get_sets, all_vars
 
 from classifier_others import model_dummy, model_xgb
 from classifier_mlp import model_mlp
@@ -31,32 +31,28 @@ NEWDIM = 15
 
 
 # Function for PCA dimensionality reduction
-def perform_pca(x_raw_train, x_raw_test, n_components=NEWDIM):
-    logging.info(
-        f"Performing PCA dimensionality reduction to {n_components} components."
-    )
-    pca = PCA(n_components=n_components)
+def perform_pca(x_raw_train, x_raw_test):
+    logging.info("Performing PCA dimensionality reduction to %d components.", NEWDIM)
+    pca = PCA(n_components=NEWDIM)
     x_pca_train = pca.fit_transform(x_raw_train)
     x_pca_test = pca.transform(x_raw_test)
     return x_pca_train, x_pca_test
 
 
 # Function for autoencoder dimensionality reduction
-def perform_autoencode(
-    x_raw_train, x_raw_test, latent_dim=NEWDIM, epochs=100, batch_size=32, n=1
-):
+def perform_autoencode(x_raw_train, x_raw_test, layers=1):
     logging.info(
-        f"Training autoencoder: dim {x_raw_train.shape[1]} -> dim {latent_dim}."
+        "Training autoencoder: dim %d -> dim %d.", x_raw_train.shape[1], NEWDIM
     )
     autoencoder = Sequential()
     autoencoder.add(Dense(20, activation="relu", input_shape=(x_raw_train.shape[1],)))
     autoencoder.add(Dropout(0.05))
-    if n == 2:
+    if layers == 2:
         autoencoder.add(Dense(20, activation="relu"))
         autoencoder.add(Dropout(0.05))
-    autoencoder.add(Dense(latent_dim, activation="linear"))
+    autoencoder.add(Dense(NEWDIM, activation="linear"))
     autoencoder.add(Dense(20, activation="relu"))
-    if n == 2:
+    if layers == 2:
         autoencoder.add(Dense(20, activation="relu"))
     autoencoder.add(Dense(x_raw_train.shape[1], activation="linear"))
 
@@ -64,14 +60,14 @@ def perform_autoencode(
     autoencoder.fit(
         x_raw_train,
         x_raw_train,
-        epochs=epochs,
-        batch_size=batch_size,
+        epochs=100,
+        batch_size=32,
         callbacks=[EarlyStopping(monitor="val_loss", patience=3)],
         validation_data=(x_raw_test, x_raw_test),
     )
 
     # Obtain the latent space representation
-    encoder = Sequential(autoencoder.layers[: (1 + 2 * n)])
+    encoder = Sequential(autoencoder.layers[: (1 + 2 * layers)])
     x_latent_train = encoder.predict(x_raw_train)
     x_latent_test = encoder.predict(x_raw_test)
 
@@ -96,34 +92,30 @@ def get_results():
         }
 
     results.loc["normalized"] = compare(
-        models_dict(), x_base_train, x_base_test, y_train, y_test
+        models_dict(), (x_base_train, x_base_test, y_train, y_test)
     )
 
     x_pca_train, x_pca_test = perform_pca(x_base_train, x_base_test)
     assert x_pca_train.shape[1] == NEWDIM
     results.loc["PCA"] = compare(
-        models_dict(NEWDIM), x_pca_train, x_pca_test, y_train, y_test
+        models_dict(NEWDIM), (x_pca_train, x_pca_test, y_train, y_test)
     )
 
     x_latent_train, x_latent_test = perform_autoencode(x_base_train, x_base_test)
     assert x_latent_train.shape[1] == NEWDIM
     results.loc["latent"] = compare(
-        models_dict(NEWDIM),
-        x_latent_train,
-        x_latent_test,
-        y_train,
-        y_test,
+        models_dict(NEWDIM), (x_latent_train, x_latent_test, y_train, y_test)
     )
 
-    x_latent2_train, x_latent2_test = perform_autoencode(x_base_train, x_base_test, n=2)
-    assert x_latent_train.shape[1] == NEWDIM
-    results.loc["latent2"] = compare(
-        models_dict(NEWDIM),
-        x_latent2_train,
-        x_latent2_test,
-        y_train,
-        y_test,
+    x_latent2_train, x_latent2_test = perform_autoencode(
+        x_base_train, x_base_test, layers=2
     )
+
+    assert x_latent2_train.shape[1] == NEWDIM
+    results.loc["latent2"] = compare(
+        models_dict(NEWDIM), (x_latent2_train, x_latent2_test, y_train, y_test)
+    )
+
     return results
 
 

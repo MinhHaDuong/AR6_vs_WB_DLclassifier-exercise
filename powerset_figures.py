@@ -15,7 +15,7 @@ result = get_results()
 def graph(score_name):
     plt.clf()
     _, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
-    y0 = result[score_name].min() * 0.99
+    ylim_bottom = result[score_name].min() * 0.99
 
     for variable, ax in zip(["co2", "gdp", "pop", "tpec"], axes.flatten()):
         mask = result.index.str.contains(variable)
@@ -32,7 +32,7 @@ def graph(score_name):
             x = [i] * len(y)
             ax.plot(x, y, "r.", alpha=0.8)
 
-        ax.set_ylim(y0, 1)
+        ax.set_ylim(ylim_bottom, 1)
 
     plt.suptitle(
         f"Effect of the presence of a variable on the classifier performance ({score_name} score)"

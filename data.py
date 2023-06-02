@@ -10,8 +10,8 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from imblearn.over_sampling import SMOTE
 from sklearn.utils import shuffle
+from imblearn.over_sampling import SMOTE
 
 from owid_sequences import get_sequences as get_df_observations
 from ar6_sequences import get_sequences as get_df_simulations
@@ -87,7 +87,10 @@ def get_data(var=None, diff=None, flatten=True):
     )
 
     logging.info(
-        f"{len(observations)} observations \t{len(simulations)} simulations\tfor {var}"
+        "%d observations \t%d simulations\tfor %s",
+        len(observations),
+        len(simulations),
+        var,
     )
 
     labels = np.concatenate([np.zeros(len(simulations)), np.ones(len(observations))])

@@ -38,28 +38,26 @@ def get_results():
         "Multilayer perceptron bis": model_mlp(dim),
         "Multilayer perceptron ter": model_mlp(dim),
         "Multilayer perceptron 128/0/48/0.1/16/0": model_mlp(
-            dim, 128, 0, 48, 0.1, 16, 0
+            dim, [128, 0, 48, 0.1, 16, 0]
         ),
         "Multilayer perceptron 96/0/48/0.2/8/0.2": model_mlp(
-            dim, 96, 0, 48, 0.2, 8, 0.2
+            dim, [96, 0, 48, 0.2, 8, 0.2]
         ),
-        "Multilayer perceptron 64/0/32/0/32/0.1": model_mlp(dim, 64, 0, 32, 0, 32, 0.1),
+        "Multilayer perceptron 64/0/32/0/32/0.1": model_mlp(
+            dim, [64, 0, 32, 0, 32, 0.1]
+        ),
         "Multilayer perceptron 32/0.1/32/0.1/32/0.2": model_mlp(
-            dim, 32, 0.1, 32, 0.1, 32, 0.2
+            dim, [32, 0.1, 32, 0.1, 32, 0.2]
         ),
     }
 
     results = pd.DataFrame(columns=["result", "duration"])
 
     def run(case, normalize, rebalance):
-        x_train, x_test, y_train, y_test = get_sets(
-            diff=True, normalize=normalize, rebalance=rebalance
-        )
-        results.loc[case] = compare(
-            models_dict, x_train, x_test, y_train, y_test, parallelize=False
-        )
+        data_tuple = get_sets(diff=True, normalize=normalize, rebalance=rebalance)
+        results.loc[case] = compare(models_dict, data_tuple, parallelize=False)
         results.loc["parallel " + case] = compare(
-            models_dict, x_train, x_test, y_train, y_test, parallelize=True
+            models_dict, data_tuple, parallelize=True
         )
 
     run("raw", False, False)

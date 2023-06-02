@@ -1,3 +1,8 @@
+"""Setup logging. Filter WARN from Tensorflow, pass on our own INFO
+
+Created on Tue May  9 19:43:16 2023
+@author: haduong@centre-cired.fr
+"""
 # log_config.py
 
 import logging
@@ -18,16 +23,16 @@ def setup_logger():
     )
 
     # Configure the console handler
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
     # Configure a file handler, if you need logs to be written to a file:
-    fh = logging.FileHandler("info.log")
-    fh.setLevel(logging.INFO)
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    file_handler = logging.FileHandler("info.log")
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
 
 
 warnings.filterwarnings(

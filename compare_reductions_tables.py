@@ -5,7 +5,6 @@ Created on Tue June 1 13:46 2023
 @author: haduong@centre-cired.fr
 """
 
-
 import pandas as pd
 from compare_reductions import get_results
 from compare import pretty_print
@@ -26,7 +25,7 @@ for key in keys:
     table = results.loc[key, "result"]
     table = table.iloc[:, 2:6]
     if key in ["PCA", "latent2"]:
-        idx=False
+        KEEP_INDEX = False
     else:
-        idx=True
-    table.to_latex(FILENAME, float_format="%.3f", index=idx)
+        KEEP_INDEX = True
+    table.to_latex(FILENAME, float_format="%.3f", index=KEEP_INDEX)

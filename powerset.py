@@ -40,8 +40,8 @@ def train_eval_powerset(model):
     result = pd.DataFrame(columns=["AUC", "F1", "Precision", "Recall", "Accuracy"])
     result.index.name = "variables"
 
-    for r in range(1, len(all_vars) + 1):
-        for subset in itertools.combinations(all_vars, r):
+    for size in range(1, len(all_vars) + 1):
+        for subset in itertools.combinations(all_vars, size):
             key = str(subset).replace(",)", ")").replace("'", "")
             logging.info(key)
             x_train, x_test, y_train, y_test = get_sets(

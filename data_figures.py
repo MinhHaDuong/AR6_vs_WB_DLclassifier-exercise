@@ -4,12 +4,12 @@ Created on Tue May  9 19:43:16 2023
 @author: haduong@centre-cired.fr
 """
 
+from functools import lru_cache
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-
-from functools import lru_cache
 
 from data import get_data, dif, flat, all_vars
 
@@ -21,11 +21,10 @@ DATA_DIFF2 = {}
 LABELS = {}
 
 for v in all_vars:
-    data_3d, labels = get_data([v], diff=False, flatten=False)
+    data_3d, LABELS[v] = get_data([v], diff=False, flatten=False)
     DATA[v] = flat(data_3d)
     DATA_DIFF[v] = flat(dif(data_3d))
     DATA_DIFF2[v] = flat(dif(dif(data_3d)))
-    LABELS[v] = labels
 
 
 # %% Display the sequences
@@ -56,8 +55,8 @@ def compare_data(axs, var="pop", diff=None, xlabel=None):
     for idx, (ax, matrix) in enumerate(zip(axs, [matrix1, matrix2])):
         lines = [list(zip(x, matrix[i, :])) for i in range(matrix.shape[0])]
 
-        lc = LineCollection(lines, linewidths=1, alpha=0.3)
-        ax.add_collection(lc)
+        spaghettis = LineCollection(lines, linewidths=1, alpha=0.3)
+        ax.add_collection(spaghettis)
 
         ax.set_xlim(x.min(), x.max())
         ax.set_ylim(matrix.min(), matrix.max())
@@ -195,7 +194,7 @@ def clouds(axs, var):
 
 
 def fig_scatter(filename=None):
-    fig, axs = plt.subplots(4, 3, figsize=(18, 16))
+    _, axs = plt.subplots(4, 3, figsize=(18, 16))
     clouds(axs[0, :], "co2")
     clouds(axs[1, :], "pop")
     clouds(axs[2, :], "gdp")
@@ -302,7 +301,7 @@ def fig_cdf(filename=None):
     steps(axs[2, :], "gdp")
     steps(axs[3, :], "tpec")
     fig.suptitle(
-        "Warning: The simulated data may be skewed towards larger countries compared to the observed data.",
+        "Warning: Simulated data skewed towards larger countries compared to observed data.",
         fontsize=16,
     )
     plt.tight_layout()

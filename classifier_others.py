@@ -23,9 +23,7 @@ from data import get_sets
 
 
 def optimum(search):
-    x_train, x_test, y_train, y_test = get_sets(
-        diff=True, normalize=True, rebalance=True
-    )
+    x_train, _, y_train, _ = get_sets(diff=True, normalize=True, rebalance=True)
     search.fit(x_train, y_train)
     best_model = search.best_estimator_
     print(best_model)

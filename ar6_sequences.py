@@ -9,8 +9,8 @@ Created on Tue May 23 12:57:57 2023
 
 import logging
 from functools import lru_cache
-import pandas as pd
 import multiprocessing as mp  # Breaks Spyder profilers, and hit RAM on T480s 8Gb
+import pandas as pd
 
 from ar6_trajectories import get_trajectories
 
@@ -37,7 +37,7 @@ index_map = {
 
 
 def _get_values_forward(group):
-    key, df = group
+    _, df = group
     df = df.reset_index()
     df.set_index("Year", inplace=True)
     df["value_Y+5"] = df["value"].reindex(df.index + 5).values

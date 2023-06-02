@@ -17,8 +17,8 @@ Created on Thu Apr 20 15:03:33 2023
 """
 
 import logging
-import pandas as pd
 from functools import lru_cache
+import pandas as pd
 
 from log_config import setup_logger
 from utils import cache
@@ -32,7 +32,10 @@ FILENAME_IN = "data/owid-co2-data.csv"
 FILENAME_NOTCOUNTRY = "data/owid_notcountry.csv"
 
 
-def get_dataframe(filename, censored_countrynames=[]):
+def get_dataframe(filename, censored_countrynames=None):
+    if censored_countrynames is None:
+        censored_countrynames = []
+
     # Note: We would prefer to use nullable integers than floats but Pandas 1.x has only NaN floats.
     coltypes = {
         "country": "category",
@@ -106,7 +109,7 @@ def shake(df):
 @cache(__file__)
 @lru_cache(maxsize=128)
 def get_sequences():
-    with open(FILENAME_NOTCOUNTRY, "r") as file:
+    with open(FILENAME_NOTCOUNTRY, "r", encoding="utf-8") as file:
         not_country = [line.strip() for line in file]
     df_filtered = get_dataframe(FILENAME_IN, not_country)
     df_sequences = shake(df_filtered)

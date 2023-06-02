@@ -65,9 +65,9 @@ def _check_units(data):
     Return 0 if okay, otherwise list variables expressed in more than one unit,
     and return their number.
     """
-    s = data["Unit"].droplevel([0, 1, 2]).groupby(level=0).unique()
+    units_used = data["Unit"].droplevel([0, 1, 2]).groupby(level=0).unique()
 
-    offending_rows = s[s.apply(lambda x: len(x) > 1)]
+    offending_rows = units_used[units_used.apply(lambda x: len(x) > 1)]
 
     if len(offending_rows):
         print(offending_rows)
@@ -175,11 +175,11 @@ def filter_variables(df, substring):
     return list(filter(lambda s: substring in s, variables))
 
 
-def top_variables(df, n):
+def top_variables(df, number):
     """Count the most frequently reported variables."""
     count = df.groupby(level=3).size()
     variables = get_variables(df)
-    return count[variables].sort_values(ascending=False)[0:n]
+    return count[variables].sort_values(ascending=False)[0:number]
 
 
 def root_variables(df):
